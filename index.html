@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Một ngày làm kỹ sư thiết kế vi mạch – SGU</title>
+<title>Hành trình kỹ sư vi mạch SGU</title>
 <style>
-/* ===== MÀU SẮC & GIAO DIỆN: sửa các biến này để đổi màu toàn game (phần giao diện HTML) ===== */
+/* ===== MÀU SẮC & GIAO DIỆN: sửa các biến này để đổi màu toàn giao diện HTML (màu vẽ trên canvas nằm ở PAL trong js/base.js) ===== */
 :root{
   --ink:#4a4458; --ink2:#7a7390; --bg:#fff7ef; --panel:#ffffff;
   --pink:#ffd3df; --pink2:#ff9eb5; --mint:#bfe8d8; --mint2:#5fb89f;
@@ -17,24 +17,28 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 button{font-family:inherit;font-size:inherit;color:inherit}
 .hidden{display:none!important}
 #app{display:flex;flex-direction:column;height:100vh}
-#hud{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 14px;background:linear-gradient(90deg,var(--pink),var(--lav),var(--sky));border-bottom:3px solid #fff}
+/* HUD */
+#hud{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 12px;background:linear-gradient(90deg,var(--pink),var(--lav),var(--sky));border-bottom:3px solid #fff}
 .brand{display:flex;align-items:baseline;gap:6px;font-size:15px}
 .brand small{background:var(--lav2);color:#fff;border-radius:8px;padding:1px 7px;font-weight:700}
-.obj{flex:1;min-width:220px;background:#ffffffcc;border-radius:12px;padding:6px 12px;font-size:15px}
+.hstats{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hp{background:#ffffffd9;border-radius:12px;padding:3px 10px;font-size:14px;white-space:nowrap}
+.hp b{color:var(--lav2)}
+.xpwrap{display:flex;flex-direction:column;min-width:130px;background:#ffffffd9;border-radius:12px;padding:3px 10px}
+.xpwrap .t{font-size:12px;display:flex;justify-content:space-between;gap:8px}
+.xpbar{height:8px;border-radius:5px;background:#e9e4f2;overflow:hidden}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint2),var(--sky2));width:0;transition:width .4s}
+.obj{flex:1 1 100%;order:5;background:#ffffffcc;border-radius:12px;padding:4px 12px;font-size:14.5px}
 .obj b{color:var(--lav2)}
-.stats{display:flex;align-items:center;gap:12px;font-size:15px}
-#pips{display:flex;gap:4px}
-.pip{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--lav2)}
-.pip.done{background:var(--mint2);border-color:var(--mint2)}
-.pip.cur{background:var(--butter);border-color:var(--butter2)}
-.hbtns{display:flex;gap:6px}
+.hbtns{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
 .btn{border:0;border-radius:12px;padding:10px 18px;background:var(--lav2);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0002;transition:transform .08s}
 .btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
 .btn:active{transform:translateY(2px);box-shadow:none}
 .btn.sm{padding:6px 12px;font-size:14px;background:#fff;color:var(--ink)}
 .btn.alt{background:var(--sky2)} .btn.ok{background:var(--mint2)} .btn.warn{background:var(--butter2);color:#4a3a00}
 .btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--lav)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.dim{opacity:.55}
 #stageWrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#efe6fa}
 #world{display:block;border-radius:10px;box-shadow:0 6px 24px #4a44582a}
 #btnAct{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font-size:17px;padding:12px 22px;z-index:5}
@@ -42,20 +46,25 @@ button{font-family:inherit;font-size:inherit;color:inherit}
 #dpad{position:absolute;left:12px;bottom:12px;display:none;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px;z-index:5}
 #dpad button{border:0;border-radius:14px;background:#ffffffcc;font-size:22px;touch-action:none}
 @media (pointer:coarse){#dpad{display:grid}}
-#banner{position:absolute;top:18%;left:50%;transform:translateX(-50%);background:var(--butter);border:4px solid var(--butter2);border-radius:20px;padding:14px 28px;font-size:24px;font-weight:800;z-index:45;animation:pop .5s ease-out;box-shadow:0 8px 24px #0003;text-align:center}
+#banner{position:absolute;top:16%;left:50%;transform:translateX(-50%);background:var(--butter);border:4px solid var(--butter2);border-radius:20px;padding:12px 26px;font-size:24px;font-weight:800;z-index:60;animation:pop .5s ease-out;box-shadow:0 8px 24px #0003;text-align:center;pointer-events:none}
 @keyframes pop{0%{transform:translateX(-50%) scale(.3);opacity:0}70%{transform:translateX(-50%) scale(1.1)}100%{transform:translateX(-50%) scale(1);opacity:1}}
-#toast{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#4a4458ee;color:#fff;border-radius:12px;padding:8px 16px;z-index:20;max-width:90%;text-align:center}
+#toast{position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#4a4458ee;color:#fff;border-radius:12px;padding:8px 16px;z-index:90;max-width:92%;text-align:center}
 .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f4eafcf2;z-index:50;padding:12px;overflow:auto}
 .screen.clear{background:#4a445899}
-.box{background:var(--panel);border-radius:24px;padding:24px 28px;max-width:860px;width:100%;box-shadow:0 10px 40px #4a44582e;border:4px solid var(--lav)}
+#scrPanel{z-index:55} #scrConfirm{z-index:70}
+.box{background:var(--panel);border-radius:24px;padding:24px 28px;max-width:860px;width:100%;box-shadow:0 10px 40px #4a44582e;border:4px solid var(--lav);max-height:96vh;overflow:auto}
+.box.wide{max-width:980px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.pnhead{display:flex;align-items:center;gap:10px;padding:10px 16px;background:linear-gradient(90deg,var(--lav),var(--sky))}
+.pnhead h2{flex:1;margin:0;font-size:20px;color:var(--ink)}
+#pnBody{padding:14px 18px;overflow:auto}
 .box h1{margin:0 0 4px;font-size:30px;color:var(--lav2);line-height:1.2}
 .box h2{margin:0 0 8px;color:var(--lav2)}
 .center{text-align:center}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row.c{justify-content:center}
 .small{font-size:13.5px;color:var(--ink2)}
-.looks{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:14px 0}
-.look{border:4px solid var(--lav);border-radius:18px;padding:8px 10px;background:#fff;cursor:pointer;text-align:center;width:130px}
+.looks{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.look{border:4px solid var(--lav);border-radius:18px;padding:8px 10px;background:#fff;cursor:pointer;text-align:center;width:118px}
 .look.sel{border-color:var(--mint2);background:var(--mint)}
 .look canvas{display:block;margin:0 auto}
 input[type=text]{border:3px solid var(--lav);border-radius:12px;padding:8px 12px;font-size:16px;font-family:inherit;width:220px;color:var(--ink)}
@@ -64,14 +73,15 @@ input[type=text]{border:3px solid var(--lav);border-radius:12px;padding:8px 12px
 .seg button.sel{background:var(--lav2);color:#fff}
 kbd{background:#fff;border:2px solid var(--lav);border-bottom-width:4px;border-radius:7px;padding:1px 7px;font-weight:700;font-family:inherit}
 ul.clean{margin:6px 0;padding-left:20px} ul.clean li{margin:4px 0}
+code{background:#f1ecff;border-radius:5px;padding:0 4px;font-family:Consolas,monospace;font-size:.92em}
 /* hội thoại */
-#dialog{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,96vw);z-index:40;background:#fff;border:4px solid var(--lav2);border-radius:22px;padding:12px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px #0003}
+#dialog{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,96vw);z-index:80;background:#fff;border:4px solid var(--lav2);border-radius:22px;padding:12px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px #0003}
 #dlgPortrait{background:var(--lav);border-radius:16px;flex:none}
 #dlgName{font-weight:800;color:var(--lav2);margin-bottom:2px}
 #dlgText{font-size:18px;line-height:1.45;min-height:54px}
 #dlgBody{flex:1}
 #dlgNext{align-self:flex-end}
-/* bảng nhiệm vụ */
+/* khung nhiệm vụ */
 #quest{z-index:30;background:#4a445888}
 .qpanel{background:#fffdf9;border:4px solid var(--lav2);border-radius:22px;width:min(960px,98vw);max-height:96vh;display:flex;flex-direction:column;box-shadow:0 10px 40px #0004}
 .qhead{display:flex;gap:10px;align-items:center;padding:10px 16px;background:linear-gradient(90deg,var(--lav),var(--sky));border-radius:18px 18px 0 0}
@@ -96,37 +106,74 @@ pre.code .cm{color:#9d93c0}
 .blank.cur{outline:3px solid var(--pink2)} .blank.filled{border-style:solid;color:#fff} .blank.good{background:#2f7f62;border-color:#8be3bf} .blank.bad{background:#a3365a;border-color:#ff9eb5}
 .opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .opt{border:3px solid var(--lav);background:#fff;border-radius:12px;padding:6px 12px;font-family:Consolas,monospace;font-size:15px;cursor:pointer}
-.opt:hover{background:var(--lav)}
-.opt.sel{background:var(--sky);border-color:var(--sky2)}
+.opt:hover{background:var(--lav)} .opt.sel{background:var(--sky);border-color:var(--sky2)}
 canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);border-radius:14px;display:block}
 .chk{list-style:none;padding:0;margin:6px 0}
-.chk li{padding:4px 0}
+.chk li{padding:3px 0}
 .chk li::before{content:"○ ";color:var(--ink2)} .chk li.done::before{content:"✓ ";color:var(--ok);font-weight:800}
 .radio{display:block;border:3px solid var(--lav);border-radius:12px;padding:8px 12px;margin:6px 0;cursor:pointer;background:#fff}
-.radio input{margin-right:8px}
-.radio.mono{font-family:Consolas,monospace}
-.sim2{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-top:10px}
-@media (max-width:800px){.sim2{grid-template-columns:1fr}}
+.radio input{margin-right:8px} .radio.mono{font-family:Consolas,monospace}
 .readout{font-family:Consolas,monospace;background:#f4f0fb;border-radius:10px;padding:6px 10px;margin:8px 0;font-size:14.5px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;margin:6px 0}
 .legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:4px;border:2px solid var(--ink2)}
 .result td,.result th{padding:4px 10px;text-align:left}
 .result{border-collapse:collapse;width:100%}
 .result tr:nth-child(even){background:#f8f3ff}
-.bigscore{font-size:44px;font-weight:900;color:var(--lav2)}
+/* bảng dữ liệu của các nhiệm vụ */
+.scrollx{overflow-x:auto}
+.tbl{border-collapse:collapse;margin:6px 0}
+.tbl th,.tbl td{border:2px solid var(--lav);padding:5px 9px;text-align:center;font-family:Consolas,monospace;white-space:nowrap}
+.tbl th{background:#f4f0fb} .tbl th.out{background:var(--butter)}
+.tbl select{font-family:Consolas,monospace;font-size:14px;border:2px solid var(--lav);border-radius:8px;padding:2px 4px;background:#fff;color:var(--ink)}
+.tbl select.bad,.cellbtn.bad{background:#ffe0e8;border-color:var(--bad)} .tbl select.good,.cellbtn.good{background:var(--mint);border-color:var(--mint2)}
+.cellbtn{min-width:44px;border:2px solid var(--lav);border-radius:8px;background:#fff;font-family:Consolas,monospace;font-size:16px;cursor:pointer;padding:2px 8px}
+.dbg{background:#2f2a3d;border-radius:14px;padding:8px;margin-bottom:8px;overflow:auto}
+.cl{display:flex;gap:10px;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;color:#f1ecff;font-family:Consolas,monospace;font-size:14px;line-height:1.55;padding:0 6px;cursor:pointer;white-space:pre}
+.cl:hover:not(:disabled){background:#4a4166} .cl:disabled{cursor:default}
+.cl .ln{color:#8e84b3;min-width:22px;text-align:right} .cl.sus{background:#a3365a} .cl.fixed{background:#2f7f62}
+/* panel: nhiệm vụ, hồ sơ, cửa hàng */
+.pill{display:inline-block;background:var(--lav);border-radius:12px;padding:3px 10px;font-size:14px;font-weight:700} .pill.ok{background:var(--mint)}
+.tabs{display:flex;gap:6px;margin:6px 0 10px;flex-wrap:wrap}
+.tab{border:3px solid var(--lav);background:#fff;border-radius:12px;padding:6px 14px;cursor:pointer;font-weight:700}
+.tab.sel{background:var(--lav2);border-color:var(--lav2);color:#fff}
+.tcard{background:#fff;border:3px solid var(--lav);border-radius:16px;padding:10px 14px;margin-bottom:10px}
+.tcard h3{margin:0 0 4px;font-size:17px} .tcard.done{background:#f1fbf6;border-color:var(--mint2)} .tcard.locked{opacity:.75;background:#faf7ff}
+.tag{background:var(--sky);border-radius:10px;padding:2px 8px;font-size:12.5px;font-weight:700}
+.bar{height:10px;border-radius:6px;background:#e9e4f2;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint2),var(--sky2))}
+.steps{margin:6px 0;padding-left:22px} .steps li{margin:2px 0} .steps li.done{color:var(--ok);text-decoration:line-through;text-decoration-color:#2f9c7455} .steps li.cur{font-weight:700;color:var(--lav2)}
+.lk{font-size:13.5px} .lk.ok{color:var(--ok)} .lk.no{color:var(--bad)}
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.icard{background:#fff;border:3px solid var(--lav);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center}
+.icard.own{border-color:var(--mint2);background:#f6fffb} .icard .in{font-weight:700} .icard .locks{text-align:left;width:100%}
+.prev{background:#f4f0fb;border-radius:12px} .avatar{background:#f4f0fb;border-radius:16px}
+.big{font-size:20px;font-weight:800;color:var(--lav2)}
+.skill{display:grid;grid-template-columns:1fr auto;gap:0 10px;margin:6px 0} .skill .bar{grid-column:1/3}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.badge{border:2px dashed var(--lav);border-radius:12px;padding:6px;text-align:center;opacity:.6} .badge.got{opacity:1;border:2px solid var(--butter2);background:var(--butter)}
+.badge .bi{font-size:24px} .badge .bn{font-weight:700;font-size:14px}
+.savebox{width:100%;font-family:Consolas,monospace;font-size:12.5px;border:3px solid var(--lav);border-radius:12px;padding:8px;color:var(--ink);margin:6px 0}
 </style>
 </head>
 <body>
 <div id="app">
   <header id="hud">
-    <div class="brand"><b>Một ngày làm kỹ sư vi mạch</b><small>SGU</small></div>
-    <div id="objective" class="obj"></div>
-    <div class="stats"><div id="pips" title="Tiến độ 6 nhiệm vụ"></div><span>Điểm: <b id="score">0</b></span><span>Gợi ý: <b id="hints">0</b></span></div>
+    <div class="brand"><b>Hành trình kỹ sư vi mạch</b><small>SGU</small></div>
+    <div class="hstats">
+      <span class="hp"><b id="hDay">Ngày 1</b></span>
+      <span class="hp" id="hCareer">Sinh viên SGU</span>
+      <div class="xpwrap" title="Kinh nghiệm để lên cấp"><div class="t"><span>XP</span><span id="hXpText">0</span></div><div class="xpbar"><i id="hXpBar"></i></div></div>
+      <span class="hp" title="Xu trong game">🪙 <b id="hMoney">0</b></span>
+      <span class="hp" title="Năng lượng còn lại hôm nay">⚡ <b id="hEnergy">3/3</b></span>
+    </div>
     <div class="hbtns">
-      <button id="btnHelp" class="btn sm">Hướng dẫn</button>
-      <button id="btnSound" class="btn sm">Âm thanh: Bật</button>
+      <button id="btnQuests" class="btn sm" title="Phím tắt: Q">Nhiệm vụ</button>
+      <button id="btnProfile" class="btn sm" title="Phím tắt: P">Hồ sơ</button>
+      <button id="btnShop" class="btn sm">Cửa hàng</button>
+      <button id="btnNextDay" class="btn sm">🌅 Sang ngày mới</button>
       <button id="btnMenu" class="btn sm">Menu</button>
     </div>
+    <div id="objective" class="obj"></div>
   </header>
   <main id="stageWrap">
     <canvas id="world"></canvas>
@@ -137,22 +184,26 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
       <span></span><button data-k="down">▼</button><span></span>
     </div>
     <div id="banner" class="hidden"></div>
-    <div id="toast" class="hidden"></div>
   </main>
 </div>
+<div id="toast" class="hidden"></div>
 
 <!-- Màn hình bắt đầu -->
 <div id="scrTitle" class="screen">
   <div class="box center">
-    <h1>Một ngày làm kỹ sư thiết kế vi mạch – SGU</h1>
-    <p style="font-size:18px;margin:6px 0 14px">Trò chơi nhập vai 2D: một ngày trong phòng lab, thiết kế <b>mạch đếm 2 bit</b> từ yêu cầu đến layout.</p>
+    <h1>Hành trình kỹ sư vi mạch SGU</h1>
+    <p style="font-size:18px;margin:6px 0 10px">Trò chơi nhập vai 2D về sự nghiệp thiết kế vi mạch: từ sinh viên đến kỹ sư có kinh nghiệm, qua nhiều ngày làm việc.</p>
     <canvas id="titleChip" width="150" height="120" style="margin:0 auto 8px"></canvas>
     <div class="row c">
-      <button id="btnStart" class="btn" style="font-size:20px;padding:14px 30px">Bắt đầu chơi</button>
+      <button id="btnStart" class="btn" style="font-size:20px;padding:14px 30px">Chơi mới</button>
       <button id="btnContinue" class="btn ok hidden" style="font-size:20px;padding:14px 30px">Tiếp tục</button>
+    </div>
+    <div class="row c" style="margin-top:10px">
+      <button id="btnImportTitle" class="btn ghost">Nhập bản lưu</button>
       <button id="btnHelp2" class="btn ghost">Hướng dẫn</button>
     </div>
-    <p class="small" style="margin-top:14px">Phòng lab trong game là bối cảnh hư cấu, không dùng logo chính thức. Một lượt chơi khoảng 10–15 phút.</p>
+    <p id="oldNote" class="small hidden" style="margin-top:10px">Tìm thấy tiến độ của game cũ (“Một ngày làm kỹ sư thiết kế vi mạch – SGU”). Bấm “Tiếp tục” để chuyển đổi sang phiên bản mới.</p>
+    <p class="small" style="margin-top:12px">Phòng lab trong game là bối cảnh hư cấu, không dùng logo chính thức. Tiến độ tự lưu trên trình duyệt; ngày chỉ trôi khi bạn bấm “Sang ngày mới”.</p>
   </div>
 </div>
 
@@ -166,7 +217,7 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
     <p id="diffDesc" class="small"></p>
     <div class="row c" style="margin-top:12px">
       <button id="btnBack" class="btn ghost">Quay lại</button>
-      <button id="btnGo" class="btn" style="font-size:19px">Vào phòng lab ▶</button>
+      <button id="btnGo" class="btn" style="font-size:19px">Bắt đầu hành trình ▶</button>
     </div>
   </div>
 </div>
@@ -176,14 +227,16 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
   <div class="box">
     <h2>Hướng dẫn chơi</h2>
     <ul class="clean">
-      <li>Di chuyển: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> hoặc các phím mũi tên.</li>
-      <li>Tương tác (nói chuyện, dùng bàn làm việc): đứng gần rồi nhấn <kbd>E</kbd> hoặc bấm nút “Tương tác” hiện ở dưới màn hình.</li>
-      <li>Hội thoại: <kbd>E</kbd> / <kbd>Space</kbd> / <kbd>Enter</kbd> hoặc nút “Tiếp”. Khi đang hội thoại hay làm nhiệm vụ, nhân vật tạm đứng yên.</li>
-      <li>Mục tiêu hiện tại và tiến độ nằm ở thanh phía trên. Mũi tên nhảy nhảy trên bản đồ chỉ nơi cần đến.</li>
-      <li>Làm sai thì thử lại, không mất tiến độ. Nút <b>Gợi ý</b> giúp bạn nhưng bị trừ điểm (tuỳ độ khó).</li>
-      <li>6 nhiệm vụ: nhận yêu cầu → sơ đồ khối → RTL (VHDL) → mô phỏng &amp; sửa lỗi → layout → bàn giao.</li>
+      <li>Di chuyển: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> hoặc phím mũi tên. Tương tác: <kbd>E</kbd> hoặc nút “Dùng…” ở dưới màn hình. Phím tắt: <kbd>Q</kbd> nhiệm vụ, <kbd>P</kbd> hồ sơ.</li>
+      <li><b>Chương 1 (hướng dẫn):</b> 6 nhiệm vụ đầu tiên, đi theo mũi tên nhảy nhảy trên bản đồ.</li>
+      <li><b>Sau đó:</b> mỗi ngày có <b>năng lượng</b> (⚡). Mở “Nhiệm vụ” → chọn nhiệm vụ hằng ngày hoặc bước của một dự án → “Nhận việc” → đi tới đúng khu trong lab và nhấn E. Mỗi nhiệm vụ tốn 1 năng lượng.</li>
+      <li>Hoàn thành nhiệm vụ nhận <b>XP</b>, <b>xu</b> 🪙 và <b>điểm kỹ năng</b>. Đủ XP và xong các dự án yêu cầu thì lên cấp: Sinh viên → Thực tập sinh → Kỹ sư mới → Kỹ sư có kinh nghiệm.</li>
+      <li>Khi sẵn sàng, bấm <b>🌅 Sang ngày mới</b>: nhận trợ cấp, hồi năng lượng, đổi bảng nhiệm vụ. Ngày <b>không</b> tự trôi khi bạn tắt game.</li>
+      <li>Dùng xu ở “Cửa hàng” để mua trang phục, phụ kiện, đồ cho Chip Chip và trang trí phòng lab. Mỗi món ghi rõ điều kiện mở khóa.</li>
+      <li>Sai thì được thử lại. Nút <b>Gợi ý</b> giúp bạn nhưng giảm một phần thưởng (tuỳ độ khó).</li>
+      <li>Tiến độ tự lưu. Dùng Menu → “Lưu trữ” để xuất/nhập bản lưu khi chuyển máy.</li>
     </ul>
-    <p class="small">Lưu ý: phần mô phỏng và layout là mô hình giáo dục trong game, không phải công cụ HDL hay layout thực tế.</p>
+    <p class="small">Phần mô phỏng và layout là mô hình giáo dục trong game, không phải công cụ HDL hay layout thực tế.</p>
     <div class="row c"><button id="btnHelpClose" class="btn">Đã hiểu</button></div>
   </div>
 </div>
@@ -194,16 +247,34 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
     <h2>Menu</h2>
     <div class="row c" style="flex-direction:column;align-items:stretch">
       <button id="mResume" class="btn">Tiếp tục chơi</button>
-      <button id="mRestart" class="btn warn">Chơi lại từ đầu</button>
+      <button id="mHelp" class="btn alt">Hướng dẫn</button>
+      <button id="btnMusic" class="btn alt">Nhạc nền: Bật</button>
+      <button id="btnSound" class="btn alt">Hiệu ứng âm thanh: Bật</button>
+      <button id="mSave" class="btn ok">Lưu trữ: xuất / nhập bản lưu</button>
       <button id="mHome" class="btn ghost">Về màn hình chính</button>
+      <button id="mRestart" class="btn warn">Chơi lại từ đầu</button>
     </div>
     <p id="saveNote" class="small"></p>
   </div>
 </div>
 
-<!-- Kết thúc -->
-<div id="scrEnd" class="screen hidden">
-  <div class="box" id="endBox"></div>
+<!-- Kết thúc chương 1 -->
+<div id="scrEnd" class="screen hidden"><div class="box" id="endBox"></div></div>
+
+<!-- Panel dùng chung -->
+<div id="scrPanel" class="screen clear hidden">
+  <div class="box wide">
+    <div class="pnhead"><h2 id="pnTitle"></h2><button id="pnClose" class="btn ghost sm">Đóng ✕</button></div>
+    <div id="pnBody"></div>
+  </div>
+</div>
+
+<!-- Hộp xác nhận -->
+<div id="scrConfirm" class="screen clear hidden">
+  <div class="box center" style="max-width:460px">
+    <h2 id="cfTitle"></h2><div id="cfBody" style="margin-bottom:12px"></div>
+    <div class="row c"><button id="cfNo" class="btn ghost">Hủy</button><button id="cfYes" class="btn">Đồng ý</button></div>
+  </div>
 </div>
 
 <!-- Hội thoại -->
@@ -213,7 +284,7 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
   <button id="dlgNext" class="btn">Tiếp ▶</button>
 </div>
 
-<!-- Bảng nhiệm vụ -->
+<!-- Khung nhiệm vụ -->
 <div id="quest" class="screen hidden">
   <div class="qpanel">
     <div class="qhead">
@@ -226,1212 +297,11 @@ canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);b
   </div>
 </div>
 
-<script>
-(function(){
-'use strict';
-
-/* =====================================================================
-   0. CẤU HÌNH – CHỖ DỄ CHỈNH NHẤT (tên, màu, lời thoại, độ khó)
-   ===================================================================== */
-const CONFIG = {
-  teacher:  { name:'Cô Minh Châu', role:'Giảng viên hướng dẫn' },   // đổi tên giảng viên ở đây
-  teammate: { name:'Khoa',         role:'Bạn cùng nhóm' },          // đổi tên bạn cùng nhóm ở đây
-  mascot:   { name:'Chip Chip' },                                    // đổi tên linh vật ở đây
-  badgeName:'Kỹ sư vi mạch tập sự SGU',
-  defaultName:'Bạn',
-  // Ba ngoại hình để chọn (đổi màu tóc / áo ở đây)
-  looks:[
-    { id:0, name:'Mây',    hair:'#5b4a6b', style:'bun',   outfit:'#9ad7e8', legs:'#6f7bb0', skin:'#ffe3d0', glasses:false },
-    { id:1, name:'Nắng',   hair:'#9a6246', style:'short', outfit:'#f7b7c9', legs:'#8b78a8', skin:'#ffd9c2', glasses:false },
-    { id:2, name:'Bạc hà', hair:'#33405e', style:'twin',  outfit:'#c9b8f2', legs:'#5f8f86', skin:'#fde0cf', glasses:true  }
-  ],
-  // Độ khó: điểm bị trừ cho mỗi lần làm sai / dùng gợi ý; haloAlways: luôn hiện vùng cách ly ở nhiệm vụ layout
-  difficulties:{
-    easy:  { label:'Dễ',     wrongPenalty:0, hintPenalty:0,  haloAlways:true,  desc:'Không bị trừ điểm khi sai hoặc dùng gợi ý. Hợp để làm quen.' },
-    normal:{ label:'Thường', wrongPenalty:3, hintPenalty:6,  haloAlways:true,  desc:'Sai mỗi lần −3 điểm, mỗi gợi ý −6 điểm (mỗi nhiệm vụ tối đa 100 điểm, tối thiểu 40).' },
-    hard:  { label:'Khó',    wrongPenalty:6, hintPenalty:12, haloAlways:false, desc:'Sai −6, gợi ý −12 điểm; ở nhiệm vụ layout chỉ thấy vùng cách ly khi đang kéo khối.' }
-  },
-  maxPoints:100, minPoints:40,
-  speed:170                      // tốc độ đi bộ (px/giây)
-};
-
-// Màu vẽ trên canvas (bản đồ, nhân vật, đồ vật)
-const PAL = {
-  floorA:'#fdf6ec', floorB:'#f8eddc', wall:'#cdbff2', wallDark:'#b3a2e6', wood:'#ebcfa6', woodDark:'#c9a27a',
-  ink:'#4a4458', ink2:'#7a7390', mint:'#bfe8d8', pink:'#ffd3df', sky:'#c6e6fb', butter:'#fff0b8',
-  lav:'#dcd0f7', chip:'#8fd3c1', chipDark:'#5fa896', coral:'#ff7f9d'
-};
-
-// Lời thoại. {name} sẽ được thay bằng tên người chơi.
-const TEXT = {
-  intro:[
-    {who:'chip', text:'Chào {name}! Mình là Chip Chip, linh vật của phòng lab. Hôm nay bạn sẽ làm kỹ sư thiết kế vi mạch tập sự đó!'},
-    {who:'chip', text:'Đi tìm Cô Minh Châu ở bàn giảng viên (góc trên bên trái) để nhận đề bài nha. Đi bằng WASD hoặc phím mũi tên, nhấn E để nói chuyện.'}
-  ],
-  assign:[
-    {who:'teacher', text:'Chào {name}, chào mừng đến phòng lab! (Phòng lab này là bối cảnh hư cấu của trò chơi nhé.)'},
-    {who:'teacher', text:'Hôm nay nhóm mình cần thiết kế một mạch đếm 2 bit.'},
-    {who:'teacher', text:'Yêu cầu: đếm theo chu kỳ 00 → 01 → 10 → 11 → 00 ở mỗi cạnh lên của clock. Có reset đồng bộ, tích cực mức cao.'},
-    {who:'teacher', text:'Việc đầu tiên của người kỹ sư là đọc kỹ đề và xác định tín hiệu vào/ra. Em chọn giúp cô nhé!'}
-  ],
-  assignAgain:[ {who:'teacher', text:'Cô nhắc lại: mạch đếm 2 bit, đếm lên ở cạnh lên của clock, có reset đồng bộ mức cao. Em chọn các tín hiệu vào/ra nhé.'} ],
-  q1done:[
-    {who:'chip', text:'Đúng rồi! Để mình giải thích nha. clk (clock) là “nhịp tim” của mạch: mỗi cạnh lên là một nhịp để bộ đếm cập nhật.'},
-    {who:'chip', text:'rst (reset) đưa bộ đếm về 00. Vì là reset đồng bộ mức cao nên nó chỉ có tác dụng ở cạnh lên của clk khi rst = 1.'},
-    {who:'chip', text:'Q[1:0] là ngõ ra 2 bit chứa giá trị đang đếm: 00, 01, 10, 11. Giờ ra bảng trắng ở giữa phòng để vẽ sơ đồ khối nhé!'}
-  ],
-  q2intro:[ {who:'chip', text:'Đây là bảng trắng! Kéo (hoặc bấm) các khối vào bảng, rồi bấm hai cổng để nối dây: từ ngõ ra (chấm hồng) sang ngõ vào (chấm xanh).'} ],
-  q2done:[ {who:'chip', text:'Sơ đồ khối chuẩn rồi! Tiếp theo, ngồi vào bàn máy tính bên trái để viết RTL nha.'} ],
-  q3intro:[
-    {who:'khoa', text:'Chào {name}! Mình để sẵn khung code VHDL cho bộ đếm, còn mấy chỗ trống chờ bạn điền đó.'},
-    {who:'chip', text:'Mạch chưa chạy hả? Bình tĩnh, kiểm tra từng khối nha! Cứ bấm vào chỗ trống để chọn mảnh code.'}
-  ],
-  q3done:[ {who:'chip', text:'Code đẹp lắm! Giờ ra khu kiểm tra (bên phải) để xem mạch chạy bằng waveform nhé.'} ],
-  q4intro:[
-    {who:'chip', text:'Đây là khu kiểm tra: ta quan sát clock, reset và Q bằng waveform.'},
-    {who:'chip', text:'Nhớ nha: đây là mô hình mô phỏng giáo dục trong game, không phải phần mềm mô phỏng HDL thực tế.'}
-  ],
-  q4done:[ {who:'khoa', text:'Hóa ra mình lỡ viết falling_edge! Cảm ơn bạn đã bắt lỗi. Giờ đến khu layout ở giữa phòng nhé.'} ],
-  q5intro:[
-    {who:'chip', text:'Layout là cách bố trí và kết nối các phần tử trên chip. Ở đây ta chơi một mô hình minh họa đơn giản trên lưới ô vuông.'},
-    {who:'chip', text:'Quy tắc của game: hai khối phải cách nhau ít nhất 1 ô trống. Khối nào vi phạm sẽ tô đỏ.'}
-  ],
-  q5done:[ {who:'chip', text:'Gọn gàng quá! Giờ quay lại gặp Cô Minh Châu để bàn giao sản phẩm nhé.'} ],
-  handover:[
-    {who:'teacher', text:'Cô đã xem kết quả của {name}: từ yêu cầu thiết kế, sơ đồ khối, RTL, mô phỏng đến layout, em làm rất có hệ thống.'},
-    {who:'chip', text:'Mạch chưa chạy hả? Bình tĩnh, kiểm tra từng khối nha! … Hôm nay bạn đâu cần câu đó nữa rồi.'},
-    {who:'teacher', text:'Cô trao cho {name} huy hiệu “Kỹ sư vi mạch tập sự SGU”. Chúc mừng em!'}
-  ],
-  khoaTips:[
-    'Cô Minh Châu đang đợi bạn ở bàn giảng viên đó, qua nhận đề bài đi!',
-    'Sơ đồ khối vẽ ở bảng trắng phía trên nha. Nhớ: clock và reset đi vào bộ đếm, Q đi ra khối hiển thị.',
-    'Code ở máy tính bên trái. Mẹo: reset đồng bộ thì kiểm tra bên TRONG điều kiện cạnh lên.',
-    'Khu kiểm tra ở bên phải. Xem kỹ Q đổi giá trị đúng vào cạnh nào của clock nha!',
-    'Layout hả? Cứ chừa khoảng trống giữa các khối, đừng xếp sát nhau. Mình hay bị đỏ hoài.',
-    'Xong hết rồi hả? Qua gặp cô bàn giao đi!',
-    'Bạn đã là kỹ sư tập sự SGU rồi, quá đỉnh!'
-  ],
-  flavor:{
-    shelf:'Giá sách: “Thiết kế số với VHDL”, “Mạch logic cơ bản”… Toàn sách hay!',
-    plant:'Cây xanh giúp lab bớt căng thẳng. Reset tâm trạng đồng bộ ở cạnh lên của… nước tưới.',
-    coffee:'Máy pha cà phê. Cà phê giúp tỉnh táo, nhưng mạch lỗi thì vẫn phải kiểm tra từng khối nha!',
-    poster:'Áp phích: “Clock là nhịp tim, reset là nút khởi động lại”. Chip Chip rất thích câu này.',
-    khoaDesk:'Bàn của Khoa: màn hình đầy cửa sổ code và một cốc trà sữa đã cạn.'
-  }
-};
-const OBJECTIVES = [
-  'Gặp <b>Cô Minh Châu</b> (bàn giảng viên) để nhận đề bài.',
-  'Ra <b>bảng trắng</b> để xây dựng sơ đồ khối.',
-  'Ngồi vào <b>bàn máy tính</b> để hoàn thiện code VHDL.',
-  'Đến <b>khu kiểm tra</b> để mô phỏng và sửa lỗi.',
-  'Đến <b>khu layout</b> để sắp xếp các khối.',
-  'Quay lại gặp <b>Cô Minh Châu</b> để bàn giao sản phẩm.',
-  'Hoàn thành! Bạn có thể đi dạo trong lab hoặc chơi lại.'
-];
-const QUEST_TITLES = ['Nhận yêu cầu thiết kế','Xây dựng sơ đồ khối','Hoàn thiện thiết kế RTL','Mô phỏng và sửa lỗi','Khám phá layout','Bàn giao sản phẩm'];
-
-/* =====================================================================
-   1. TIỆN ÍCH
-   ===================================================================== */
-const $ = (s,r=document)=>r.querySelector(s);
-const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function h(tag, attrs, ...kids){
-  const e=document.createElement(tag);
-  if(attrs) for(const k in attrs){ const v=attrs[k];
-    if(k==='class') e.className=v; else if(k==='html') e.innerHTML=v;
-    else if(k.startsWith('on')) e.addEventListener(k.slice(2),v);
-    else if(v!==false&&v!=null) e.setAttribute(k,v); }
-  for(const c of kids.flat()){ if(c==null||c===false) continue; e.append(c.nodeType?c:document.createTextNode(c)); }
-  return e;
-}
-const SVGNS='http://www.w3.org/2000/svg';
-function sv(tag, attrs, ...kids){
-  const e=document.createElementNS(SVGNS,tag);
-  if(attrs) for(const k in attrs){ const v=attrs[k]; if(v!=null&&v!==false) e.setAttribute(k,v); }
-  for(const c of kids.flat()){ if(c==null||c===false) continue; e.append(c.nodeType?c:document.createTextNode(c)); }
-  return e;
-}
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const bin=q=>q.toString(2).padStart(2,'0');
-function rr(c,x,y,w,hh,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+hh,r); c.arcTo(x+w,y+hh,x,y+hh,r); c.arcTo(x,y+hh,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
-function ell(c,x,y,rx,ry,fill,stroke){ c.beginPath(); c.ellipse(x,y,rx,ry,0,0,Math.PI*2); if(fill){c.fillStyle=fill;c.fill();} if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();} }
-
-/* =====================================================================
-   2. LƯU TRỮ (localStorage, xử lý khi bị chặn)
-   ===================================================================== */
-const Store = {
-  key:'sgu-chip-lab-v1', ok:true,
-  load(){ try{ const raw=localStorage.getItem(this.key); if(!raw) return null; const d=JSON.parse(raw); return d&&typeof d==='object'?d:null; }catch(e){ this.ok=false; return null; } },
-  save(d){ try{ localStorage.setItem(this.key,JSON.stringify(d)); return true; }catch(e){ this.ok=false; return false; } },
-  clear(){ try{ localStorage.removeItem(this.key); }catch(e){} }
-};
-
-/* =====================================================================
-   3. ÂM THANH (chỉ bật sau tương tác đầu tiên)
-   ===================================================================== */
-const Sound = {
-  ctx:null, on:true,
-  unlock(){
-    try{
-      if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; this.ctx=new AC(); }
-      if(this.ctx.state==='suspended') this.ctx.resume();
-    }catch(e){ this.ctx=null; }
-  },
-  // Âm lượng chung: tăng/giảm số này (0.1 = nhỏ, 1 = to) nếu thấy quá nhỏ hoặc quá to
-  master:0.8,
-  tone(f,d,type='sine',vol=0.3,delay=0){
-    if(!this.on||!this.ctx) return;
-    try{
-      const t=this.ctx.currentTime+delay, o=this.ctx.createOscillator(), g=this.ctx.createGain();
-      o.type=type; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t);
-      g.gain.exponentialRampToValueAtTime(vol*this.master,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
-      o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t+d+0.02);
-    }catch(e){}
-  },
-  click(){ this.tone(660,0.1,'triangle',0.35); },
-  blip(){ this.tone(880,0.06,'triangle',0.25); },
-  ok(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,0.3,'triangle',0.4,i*0.09)); },
-  bad(){ this.tone(220,0.25,'square',0.18); this.tone(180,0.3,'square',0.16,0.12); },
-  set(on){ this.on=on; $('#btnSound').textContent='Âm thanh: '+(on?'Bật':'Tắt'); }
-};
-
-/* =====================================================================
-   4. ĐIỀU KHIỂN (bàn phím + nút ảo)
-   ===================================================================== */
-const Input = {
-  keys:{}, virt:{},
-  map:{KeyW:'up',ArrowUp:'up',KeyS:'down',ArrowDown:'down',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'},
-  vec(){
-    const k=this.keys, v=this.virt;
-    let x=((k.right||v.right)?1:0)-((k.left||v.left)?1:0), y=((k.down||v.down)?1:0)-((k.up||v.up)?1:0);
-    const l=Math.hypot(x,y); return l?{x:x/l,y:y/l}:{x:0,y:0};
-  }
-};
-
-/* =====================================================================
-   5. TRẠNG THÁI GAME
-   ===================================================================== */
-const G = {
-  screen:'title', name:CONFIG.defaultName, look:0, diff:'normal',
-  stage:0,                  // số nhiệm vụ đã hoàn thành (0..6; 6 = đã bàn giao)
-  results:{}, attempt:{},   // results[n]={score,wrong,hints}; attempt[n]={wrong,hints}
-  seenAssign:false, t:0,
-  player:{x:480,y:500,dir:'up',moving:false,phase:0},
-  chip:{x:450,y:520},
-  particles:[]
-};
-const diff=()=>CONFIG.difficulties[G.diff]||CONFIG.difficulties.normal;
-function totalScore(){ return Object.values(G.results).reduce((a,r)=>a+r.score,0); }
-function totalHints(){ let n=0; for(const k in G.attempt) n+=G.attempt[k].hints||0; return n; }
-function attempt(n){ return G.attempt[n]||(G.attempt[n]={wrong:0,hints:0}); }
-function save(){
-  const ok=Store.save({name:G.name,look:G.look,diff:G.diff,stage:G.stage,results:G.results,attempt:G.attempt});
-  if(!ok && !G._warnedSave){ G._warnedSave=true; UI.toast('Trình duyệt không cho lưu tiến độ – bạn vẫn chơi bình thường nhưng sẽ không tiếp tục được lần sau.'); }
-}
-
-/* =====================================================================
-   6. BẢN ĐỒ & VA CHẠM
-   ===================================================================== */
-const W=960, H=576;
-const OBJ = {
-  teacherDesk:{rect:[48,60,150,50]},
-  whiteboard:{rect:[330,0,300,50], name:'Bảng trắng', act:'whiteboard', mk:[480,66,'up']},
-  pcdesk:{rect:[60,300,190,56], name:'Bàn máy tính', act:'pcdesk', mk:[155,284,'down']},
-  khoaDesk:{rect:[60,420,190,56], name:'Bàn của Khoa', act:'flavor:khoaDesk'},
-  layout:{rect:[380,330,200,60], name:'Khu thiết kế layout', act:'layout', mk:[480,314,'down']},
-  bench:{rect:[730,86,170,64], name:'Khu kiểm tra', act:'bench', mk:[815,70,'down']},
-  shelf:{rect:[880,250,50,130], name:'Giá sách', act:'flavor:shelf'},
-  plant:{rect:[890,490,36,50], name:'Cây xanh', act:'flavor:plant'},
-  coffee:{rect:[720,500,70,40], name:'Máy pha cà phê', act:'flavor:coffee'},
-  poster:{rect:[210,0,80,50], name:'Áp phích', act:'flavor:poster'}
-};
-const NPC = {
-  teacher:{x:120,y:160,name:CONFIG.teacher.name, mk:[120,86]},
-  khoa:{x:285,y:452,name:CONFIG.teammate.name}
-};
-const MARK = {0:'teacher',1:'whiteboard',2:'pcdesk',3:'bench',4:'layout',5:'teacher'};
-function circleHitsRect(x,y,r,rc){ const cx=clamp(x,rc[0],rc[0]+rc[2]), cy=clamp(y,rc[1],rc[1]+rc[3]); return Math.hypot(x-cx,y-cy)<r; }
-function hitWorld(x,y){
-  const r=11;
-  if(x<34||x>926||y<76||y>548) return true;
-  for(const k in OBJ) if(circleHitsRect(x,y,r,OBJ[k].rect)) return true;
-  for(const k in NPC) if(Math.hypot(x-NPC[k].x,y-NPC[k].y)<r+12) return true;
-  return false;
-}
-function movePlayer(dt){
-  const p=G.player, v=Input.vec();
-  p.moving=(v.x!==0||v.y!==0);
-  if(!p.moving) return;
-  if(Math.abs(v.x)>Math.abs(v.y)) p.dir=v.x<0?'left':'right'; else p.dir=v.y<0?'up':'down';
-  const sp=CONFIG.speed*dt;
-  const nx=p.x+v.x*sp; if(!hitWorld(nx,p.y)) p.x=nx;
-  const ny=p.y+v.y*sp; if(!hitWorld(p.x,ny)) p.y=ny;
-  p.phase+=dt*12;
-}
-// Tìm vật/nhân vật gần nhất để tương tác
-function nearest(){
-  const p=G.player; let best=null, bd=1e9;
-  for(const k in OBJ){ const o=OBJ[k]; if(!o.act) continue;
-    const rc=o.rect, d=Math.hypot(p.x-clamp(p.x,rc[0],rc[0]+rc[2]), p.y-clamp(p.y,rc[1],rc[1]+rc[3]));
-    if(d<=34 && d<bd){ bd=d; best={id:k,name:o.name,act:o.act}; } }
-  for(const k in NPC){ const n=NPC[k], d=Math.hypot(p.x-n.x,p.y-n.y)-12;
-    if(d<=40 && d<bd){ bd=d; best={id:k,name:n.name,act:'npc:'+k}; } }
-  return best;
-}
-
-/* =====================================================================
-   7. VẼ NHÂN VẬT CHIBI, CHIP CHIP, ĐỒ VẬT, BẢN ĐỒ
-   ===================================================================== */
-function drawChibi(c,x,y,o){
-  const L=o.look, dir=o.dir||'down', t=o.t||0, mv=!!o.moving, ph=o.phase||0;
-  const bob = mv ? Math.abs(Math.sin(ph))*2.6 : Math.sin(t*2)*0.7;
-  const sw = mv ? Math.sin(ph) : 0;
-  const side = dir==='left'||dir==='right', sx = dir==='left'?-1:1;
-  c.save(); c.translate(x,y); if(o.scale) c.scale(o.scale,o.scale);
-  ell(c,0,2,15,6,'rgba(80,60,100,.2)');
-  // chân
-  const shoe='#fff';
-  if(side){
-    for(const s of [1,-1]){ const ox=s*sw*5; rr(c,ox-4,-13,8,13,3); c.fillStyle=L.legs; c.fill(); rr(c,ox-4+(sx>0?1:-1),-4,8,5,2.5); c.fillStyle=shoe; c.fill(); }
-  } else {
-    for(const s of [-1,1]){ const lift=Math.max(0,s*sw)*4; rr(c,s*5.5-3.5,-13-lift,7,13,3); c.fillStyle=L.legs; c.fill(); rr(c,s*5.5-4,-4-lift,8,5,2.5); c.fillStyle=shoe; c.fill(); }
-  }
-  // tóc phía sau (đuôi, búi)
-  const hy=-49+bob;
-  if(L.style==='twin'){ for(const s of [-1,1]){ ell(c,s*17,hy+3+(mv?sw*s*1.5:0),6,9,L.hair); } }
-  // thân
-  rr(c,-11,-35+bob,22,24,8); c.fillStyle=L.outfit; c.fill(); c.strokeStyle='rgba(74,68,88,.25)'; c.lineWidth=1.5; c.stroke();
-  if(L.coat){ c.beginPath(); c.moveTo(0,-34+bob); c.lineTo(0,-12+bob); c.strokeStyle='rgba(74,68,88,.3)'; c.stroke(); }
-  if(L.hoodie){ c.fillStyle='rgba(255,255,255,.35)'; rr(c,-6,-18+bob,12,7,3); c.fill(); }
-  // tay
-  if(side){ ell(c,sw*-5,-24+bob,4.5,7,L.outfit,'rgba(74,68,88,.25)'); }
-  else for(const s of [-1,1]){ ell(c,s*13.5,-24+bob+(-s*sw*2.5),4.2,7.5,L.outfit,'rgba(74,68,88,.25)'); }
-  // dây đeo + thẻ sinh viên (không có logo)
-  if(dir!=='up'){
-    const cx= side?sx*1:0; c.strokeStyle=L.lanyard||'#7ec8e3'; c.lineWidth=2;
-    c.beginPath(); c.moveTo(cx-5,-35+bob); c.lineTo(cx,-23+bob); c.lineTo(cx+5,-35+bob); c.stroke();
-    rr(c,cx-5,-24+bob,10,13,2); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#9fb0c8'; c.lineWidth=1; c.stroke();
-    c.fillStyle=L.lanyard||'#7ec8e3'; c.fillRect(cx-5,-24+bob,10,4);
-    c.fillStyle='#b8c0d0'; c.fillRect(cx-3,-17+bob,6,1.4); c.fillRect(cx-3,-14.5+bob,4,1.4);
-  } else { c.strokeStyle=L.lanyard||'#7ec8e3'; c.lineWidth=2; c.beginPath(); c.moveTo(-4,-35+bob); c.lineTo(4,-35+bob); c.stroke(); }
-  // đầu
-  ell(c,0,hy,17,16.5,L.skin,'rgba(74,68,88,.3)');
-  if(L.phones){ c.strokeStyle='#5a5470'; c.lineWidth=3.5; c.beginPath(); c.arc(0,hy,18.5,Math.PI*1.05,Math.PI*1.95); c.stroke(); for(const s of [-1,1]) { rr(c,s*18-3.5,hy-5,7,11,3); c.fillStyle='#ff9eb5'; c.fill(); } }
-  // tóc
-  c.fillStyle=L.hair;
-  if(dir==='up'){ ell(c,0,hy-1,17.5,17,L.hair); }
-  else {
-    c.beginPath(); c.ellipse(0,hy-3,18,15,0,Math.PI,Math.PI*2); c.fill();
-    c.beginPath(); // mái
-    c.moveTo(-17,hy-3); c.quadraticCurveTo(-8,hy+5,-2,hy-5); c.quadraticCurveTo(6,hy+4,17,hy-3); c.lineTo(17,hy-8); c.lineTo(-17,hy-8); c.closePath(); c.fill();
-    if(side){ ell(c,-sx*10,hy,8,13,L.hair); }
-  }
-  if(L.style==='bun') ell(c,0,hy-20,7.5,7.5,L.hair);
-  if(L.style==='short'&&dir!=='up'){ c.beginPath(); c.arc(-9,hy-16,5,0,7); c.arc(5,hy-18,4,0,7); c.fill(); }
-  // khuôn mặt
-  if(dir!=='up'){
-    const blink = (t%4)<0.12;
-    const eyes = side?[sx*6.5]:[-6,6];
-    for(const ex of eyes){
-      if(blink){ c.strokeStyle=PAL.ink; c.lineWidth=2; c.beginPath(); c.moveTo(ex-3,hy+1); c.lineTo(ex+3,hy+1); c.stroke(); }
-      else { ell(c,ex,hy+1,3,4,'#2f2a3d'); ell(c,ex+1,hy-0.5,1.1,1.3,'#fff'); }
-      if(L.glasses){ c.strokeStyle='#5a5470'; c.lineWidth=1.8; c.beginPath(); c.arc(ex,hy+1,6,0,7); c.stroke(); }
-    }
-    if(L.glasses&&!side){ c.beginPath(); c.moveTo(-1,hy+1); c.lineTo(1,hy+1); c.stroke(); }
-    const bx = side?[sx*11]:[-10.5,10.5];
-    for(const b of bx) ell(c,b,hy+7,3.6,2.3,'rgba(255,130,160,.55)');
-    c.strokeStyle='#8a4f5e'; c.lineWidth=1.6; c.beginPath(); c.arc(side?sx*7:0,hy+7,2.6,0.15*Math.PI,0.85*Math.PI); c.stroke();
-  }
-  c.restore();
-}
-function drawChip(c,x,y,t,scale){
-  const bob=Math.abs(Math.sin(t*3.2))*3;
-  c.save(); c.translate(x,y); if(scale) c.scale(scale,scale);
-  ell(c,0,1,11,4,'rgba(80,60,100,.18)');
-  const by=-17-bob;
-  c.fillStyle=PAL.chipDark;
-  for(let i=-1;i<=1;i++){ c.fillRect(-17,by+i*8-1.5,5,3); c.fillRect(12,by+i*8-1.5,5,3); c.fillRect(i*8-1.5,by-17,3,5); c.fillRect(i*8-1.5,by+12,3,5); }
-  rr(c,-13,by-13,26,26,6); c.fillStyle=PAL.chip; c.fill(); c.strokeStyle=PAL.chipDark; c.lineWidth=2.2; c.stroke();
-  rr(c,-9,by-9,18,18,4); c.fillStyle='rgba(255,255,255,.28)'; c.fill();
-  ell(c,-8,by-9,2,2,PAL.chipDark);
-  const blink=(t%3.3)<0.1;
-  for(const ex of [-5,5]){ if(blink){ c.strokeStyle=PAL.ink; c.lineWidth=1.8; c.beginPath(); c.moveTo(ex-2.5,by); c.lineTo(ex+2.5,by); c.stroke(); } else { ell(c,ex,by,2.5,3.2,'#2f2a3d'); ell(c,ex+.8,by-1,.9,1,'#fff'); } }
-  for(const ex of [-9,9]) ell(c,ex,by+5,2.6,1.7,'rgba(255,120,150,.6)');
-  c.strokeStyle='#2f2a3d'; c.lineWidth=1.5; c.beginPath(); c.arc(0,by+4,3,0.15*Math.PI,0.85*Math.PI); c.stroke();
-  c.restore();
-}
-function lookTeacher(){ return {hair:'#6b5b73',style:'bun',outfit:'#ffffff',legs:'#7a7390',skin:'#ffe3d0',glasses:true,coat:true,lanyard:'#ff9eb5'}; }
-function lookKhoa(){ return {hair:'#3f3a4f',style:'short',outfit:'#ffc9a8',legs:'#6f7bb0',skin:'#fbd8c0',glasses:false,hoodie:true,phones:true,lanyard:'#a8d8a0'}; }
-
-function monitor(c,x,y,w,hh,kind,t){
-  rr(c,x,y,w,hh,4); c.fillStyle='#4a4458'; c.fill();
-  rr(c,x+3,y+3,w-6,hh-9,3); c.fillStyle=kind==='scope'?'#16322b':'#f1f7ff'; c.fill();
-  c.fillStyle='#4a4458'; c.fillRect(x+w/2-6,y+hh,12,3);
-  const ix=x+6, iy=y+7;
-  if(kind==='code'){ const cols=['#9fb5f0','#ff9eb5','#8ad1b6','#e8b93a']; for(let i=0;i<4;i++){ c.fillStyle=cols[i]; c.fillRect(ix+(i%2)*4,iy+i*5,10+((i*7)%14),2.5); } }
-  else if(kind==='grid'){ c.fillStyle='#9fb5f0'; c.fillRect(ix,iy,10,6); c.fillStyle='#ff9eb5'; c.fillRect(ix+16,iy+6,10,6); c.fillStyle='#8ad1b6'; c.fillRect(ix+4,iy+16,12,5); c.strokeStyle='#bbb'; c.lineWidth=1; c.strokeRect(ix-1,iy-1,w-12,hh-14); }
-  else if(kind==='scope'){ c.strokeStyle='#7ff2b8'; c.lineWidth=1.6; c.beginPath(); for(let i=0;i<=w-12;i++){ const yy=iy+(hh-14)/2 + ((((Math.floor((i+t*40)/9))%2)?-1:1)*5); if(i===0) c.moveTo(ix+i,yy); else c.lineTo(ix+i,yy);} c.stroke(); }
-  else if(kind==='diagram'){ c.fillStyle='#c6e6fb'; c.fillRect(ix,iy,9,7); c.fillStyle='#ffd3df'; c.fillRect(ix+14,iy+3,10,9); }
-}
-function drawDesk(c,rc,o){
-  const [x,y,w,hh]=rc;
-  ell(c,x+w/2,y+hh+4,w/2+4,6,'rgba(80,60,100,.12)');
-  rr(c,x,y,w,hh,8); c.fillStyle=PAL.wood; c.fill(); c.strokeStyle=PAL.woodDark; c.lineWidth=3; c.stroke();
-  c.fillStyle='rgba(180,130,90,.25)'; c.fillRect(x+4,y+hh-9,w-8,6);
-  const n=o.mon||1, mw=n===1?46:42;
-  for(let i=0;i<n;i++){ const mx=x+w/2-(n*mw+(n-1)*10)/2+i*(mw+10); monitor(c,mx,y+4,mw,34,(o.kinds&&o.kinds[i])||'code',o.t||0); }
-  if(o.keyboard){ rr(c,x+w/2-24,y+hh-14,48,9,3); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#c9bfe6'; c.lineWidth=1.5; c.stroke(); }
-  if(o.mug){ ell(c,x+w-20,y+hh-18,6,5,'#ffd3df','#c9a2b0'); }
-}
-function drawChair(c,x,y){ ell(c,x,y,13,10,'#cdbff2','#a898d8'); ell(c,x,y-9,12,5,'#b3a2e6'); }
-function drawWorld(c,t){
-  // sàn
-  for(let j=0;j<12;j++) for(let i=0;i<20;i++){ c.fillStyle=(i+j)%2?PAL.floorA:PAL.floorB; c.fillRect(i*48,j*48,48,48); }
-  // thảm khu vực
-  const rug=(x,y,w,hh,col,label,top)=>{ rr(c,x,y,w,hh,22); c.fillStyle=col; c.globalAlpha=.55; c.fill(); c.globalAlpha=1; c.setLineDash([8,6]); c.strokeStyle='rgba(122,115,144,.5)'; c.lineWidth=2; c.stroke(); c.setLineDash([]);
-    c.fillStyle='rgba(74,68,88,.55)'; c.font='bold 13px "Segoe UI",sans-serif'; c.textAlign='center'; c.fillText(label,x+w/2,top?y+17:y+hh-8); };
-  rug(30,262,270,244,PAL.pink,'KHU THIẾT KẾ',true);
-  rug(350,292,260,170,PAL.lav,'KHU LAYOUT',true);
-  rug(700,64,232,150,PAL.mint,'KHU KIỂM TRA');
-  rug(30,66,220,140,PAL.butter,'GIẢNG VIÊN');
-  // tường
-  c.fillStyle=PAL.wall; c.fillRect(0,0,W,48); c.fillRect(0,0,24,H); c.fillRect(W-24,0,24,H); c.fillRect(0,H-20,W,20);
-  c.fillStyle=PAL.wallDark; c.fillRect(0,44,W,4); c.fillRect(24,0,3,H); c.fillRect(W-27,0,3,H); c.fillRect(0,H-23,W,3);
-  // cửa ra vào
-  rr(c,440,H-24,80,24,6); c.fillStyle='#c9a27a'; c.fill(); ell(c,508,H-10,3,3,'#fff0b8');
-  // cửa sổ
-  for(const wx of [660,720]) { rr(c,wx-0,6,46,34,5); c.fillStyle=PAL.sky; c.fill(); c.strokeStyle='#fff'; c.lineWidth=3; c.stroke(); c.beginPath(); c.moveTo(wx+23,6); c.lineTo(wx+23,40); c.stroke(); }
-  // áp phích
-  const po=OBJ.poster.rect; rr(c,po[0],8,po[2],34,4); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#c9bfe6'; c.lineWidth=2; c.stroke();
-  rr(c,po[0]+28,16,24,18,3); c.fillStyle=PAL.chip; c.fill(); c.fillStyle=PAL.chipDark; for(let i=0;i<3;i++){ c.fillRect(po[0]+24,19+i*5,4,2); c.fillRect(po[0]+52,19+i*5,4,2); }
-  // bảng trắng
-  const wb=OBJ.whiteboard.rect; rr(c,wb[0]+4,4,wb[2]-8,40,5); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#b8b0d0'; c.lineWidth=4; c.stroke();
-  const bx=(x,y,w,col,lab)=>{ rr(c,x,y,w,20,4); c.fillStyle=col; c.fill(); c.fillStyle=PAL.ink; c.font='bold 10px "Segoe UI",sans-serif'; c.textAlign='center'; c.fillText(lab,x+w/2,y+14); };
-  bx(360,12,50,PAL.sky,'CLK'); bx(360,28,50,PAL.pink,'RST'); bx(448,16,74,PAL.mint,'ĐẾM 2 BIT'); bx(560,16,50,PAL.butter,'Q');
-  c.strokeStyle=PAL.ink2; c.lineWidth=1.6; c.beginPath(); c.moveTo(410,22); c.lineTo(448,22); c.moveTo(410,38); c.lineTo(448,38); c.moveTo(522,26); c.lineTo(560,26); c.stroke();
-  // bàn & đồ vật
-  const td=OBJ.teacherDesk.rect; drawChair(c,td[0]+td[2]/2,td[1]+2); drawDesk(c,td,{mon:1,keyboard:true,mug:true,t});
-  rr(c,td[0]+8,td[1]+td[3]-12,34,10,3); c.fillStyle='#fff'; c.fill(); c.fillStyle=PAL.ink2; c.font='bold 8px sans-serif'; c.textAlign='center'; c.fillText('GV',td[0]+25,td[1]+td[3]-4);
-  const pc=OBJ.pcdesk.rect; drawChair(c,pc[0]+95,pc[1]+pc[3]+26); drawDesk(c,pc,{mon:2,kinds:['code','code'],keyboard:true,t});
-  const kd=OBJ.khoaDesk.rect; drawChair(c,kd[0]+95,kd[1]+kd[3]+26); drawDesk(c,kd,{mon:2,kinds:['code','diagram'],keyboard:true,mug:true,t});
-  const ly=OBJ.layout.rect; drawChair(c,ly[0]+100,ly[1]+ly[3]+26); drawDesk(c,ly,{mon:2,kinds:['grid','grid'],keyboard:true,t});
-  const bn=OBJ.bench.rect; drawDesk(c,bn,{mon:2,kinds:['scope','scope'],t});
-  rr(c,bn[0]+8,bn[1]+bn[3]-18,34,12,3); c.fillStyle='#8ad1b6'; c.fill(); ell(c,bn[0]+bn[2]-20,bn[1]+bn[3]-12,5,4,'#ff9eb5'); // mạch thử + núm
-  // giá sách
-  const sh=OBJ.shelf.rect; rr(c,sh[0],sh[1],sh[2],sh[3],6); c.fillStyle=PAL.wood; c.fill(); c.strokeStyle=PAL.woodDark; c.lineWidth=3; c.stroke();
-  const cols=['#9fb5f0','#ff9eb5','#8ad1b6','#e8b93a','#c9b8f2'];
-  for(let r=0;r<4;r++) for(let i=0;i<4;i++){ c.fillStyle=cols[(r+i)%5]; c.fillRect(sh[0]+6+i*9,sh[1]+8+r*30,7,22); }
-  // cây
-  const pl=OBJ.plant.rect; rr(c,pl[0]+6,pl[1]+28,24,22,5); c.fillStyle='#f0a58c'; c.fill();
-  for(const [dx,dy,r] of [[18,18,12],[10,22,9],[26,22,9],[18,8,9]]) ell(c,pl[0]+dx,pl[1]+dy,r,r,'#8fd1a0','#5fb89f');
-  // máy cà phê
-  const cf=OBJ.coffee.rect; rr(c,cf[0],cf[1]+8,cf[2],cf[3]-4,6); c.fillStyle='#fff'; c.fill(); c.strokeStyle='#c9bfe6'; c.lineWidth=3; c.stroke();
-  rr(c,cf[0]+10,cf[1]+14,24,16,3); c.fillStyle='#ffd3df'; c.fill(); ell(c,cf[0]+50,cf[1]+20,5,5,'#8ad1b6'); ell(c,cf[0]+50,cf[1]+4,4,4,'rgba(200,200,220,.7)');
-}
-function drawMarker(c,x,y,t,dir){
-  const b=Math.sin(t*5)*4; c.save(); c.translate(x,y+(dir==='up'?-b:b));
-  c.beginPath(); if(dir==='up'){ c.moveTo(0,-10); c.lineTo(-9,4); c.lineTo(9,4); } else { c.moveTo(0,10); c.lineTo(-9,-4); c.lineTo(9,-4); }
-  c.closePath(); c.fillStyle=PAL.coral; c.fill(); c.strokeStyle='#fff'; c.lineWidth=3; c.stroke(); c.restore();
-}
-function render(t){
-  const c=ctx; c.setTransform(DPR,0,0,DPR,0,0); c.clearRect(0,0,W,H);
-  drawWorld(c,t);
-  // mũi tên mục tiêu
-  const target=MARK[G.stage];
-  if(G.screen==='play'||G.screen==='end'){
-    if(target==='teacher') drawMarker(c,NPC.teacher.x,NPC.teacher.y-82,t,'down'); else if(target) drawMarker(c,OBJ[target].mk[0],OBJ[target].mk[1],t,OBJ[target].mk[2]);
-  }
-  // nhân vật theo thứ tự y
-  const p=G.player, ch=G.chip;
-  const near=Math.hypot(p.x-NPC.teacher.x,p.y-NPC.teacher.y)<140;
-  const tdir = near? (Math.abs(p.x-NPC.teacher.x)>Math.abs(p.y-NPC.teacher.y)?(p.x<NPC.teacher.x?'left':'right'):(p.y<NPC.teacher.y?'up':'down')):'down';
-  const ents=[
-    {y:p.y,fn:()=>{ drawChibi(c,p.x,p.y,{look:CONFIG.looks[G.look],dir:p.dir,moving:p.moving,phase:p.phase,t});
-        c.font='bold 12px "Segoe UI",sans-serif'; c.textAlign='center'; const tw=c.measureText(G.name).width+12; rr(c,p.x-tw/2,p.y-86,tw,16,8); c.fillStyle='#ffffffdd'; c.fill(); c.fillStyle=PAL.ink; c.fillText(G.name,p.x,p.y-74); }},
-    {y:NPC.teacher.y,fn:()=>drawChibi(c,NPC.teacher.x,NPC.teacher.y,{look:lookTeacher(),dir:tdir,t})},
-    {y:NPC.khoa.y,fn:()=>drawChibi(c,NPC.khoa.x,NPC.khoa.y,{look:lookKhoa(),dir:'left',t})},
-    {y:ch.y,fn:()=>drawChip(c,ch.x,ch.y,t)}
-  ].sort((a,b)=>a.y-b.y);
-  ents.forEach(e=>e.fn());
-  // nhãn NPC
-  c.font='bold 12px "Segoe UI",sans-serif'; c.textAlign='center';
-  for(const k in NPC){ const n=NPC[k], tw=c.measureText(n.name).width+12; rr(c,n.x-tw/2,n.y-86,tw,16,8); c.fillStyle=k==='teacher'?'#ffe0ea':'#e4f6ee'; c.fill(); c.fillStyle=PAL.ink; c.fillText(n.name,n.x,n.y-74); }
-  // gợi ý nhấn E
-  if(G.screen==='play' && G.near){ const o=G.near, pos = o.act.startsWith('npc:')? [NPC[o.id].x,NPC[o.id].y-98] : [OBJ[o.id].rect[0]+OBJ[o.id].rect[2]/2, Math.max(16,OBJ[o.id].rect[1]-12)];
-    const by=pos[1]+(o.id==='whiteboard'||o.id==='poster'?70:0)-Math.abs(Math.sin(t*6))*3; rr(c,pos[0]-13,by-13,26,26,8); c.fillStyle='#fff'; c.fill(); c.strokeStyle=PAL.coral; c.lineWidth=3; c.stroke(); c.fillStyle=PAL.coral; c.font='bold 16px "Segoe UI",sans-serif'; c.fillText('E',pos[0],by+6); }
-  // hạt confetti
-  for(const q of G.particles){ c.save(); c.translate(q.x,q.y); c.rotate(q.r); c.fillStyle=q.col; c.globalAlpha=clamp(q.life*1.5,0,1); c.fillRect(-4,-2,8,4); c.restore(); }
-}
-
-/* =====================================================================
-   8. HIỆU ỨNG
-   ===================================================================== */
-const Fx = {
-  confetti(){
-    const cols=[PAL.coral,'#8ad1b6','#9fb5f0','#e8b93a','#c9b8f2','#ff9eb5'];
-    for(let i=0;i<70;i++) G.particles.push({x:W/2+(Math.random()-.5)*300,y:120+Math.random()*60,vx:(Math.random()-.5)*260,vy:-80-Math.random()*200,r:Math.random()*6,vr:(Math.random()-.5)*10,col:cols[i%cols.length],life:1.4+Math.random()*.6});
-  },
-  update(dt){ for(const q of G.particles){ q.x+=q.vx*dt; q.y+=q.vy*dt; q.vy+=420*dt; q.r+=q.vr*dt; q.life-=dt; } G.particles=G.particles.filter(q=>q.life>0); },
-  banner(text){ const b=$('#banner'); b.textContent=text; b.classList.remove('hidden'); b.style.animation='none'; void b.offsetWidth; b.style.animation=''; clearTimeout(this._bt); this._bt=setTimeout(()=>b.classList.add('hidden'),2200); }
-};
-
-/* =====================================================================
-   9. HỘI THOẠI
-   ===================================================================== */
-const SPEAKERS = {
-  teacher:()=>({name:CONFIG.teacher.name+' · '+CONFIG.teacher.role, look:lookTeacher()}),
-  khoa:()=>({name:CONFIG.teammate.name+' · '+CONFIG.teammate.role, look:lookKhoa()}),
-  chip:()=>({name:CONFIG.mascot.name, chip:true}),
-  me:()=>({name:G.name, look:CONFIG.looks[G.look]}),
-  sys:()=>({name:'Hệ thống', chip:true})
-};
-const fmt=s=>String(s).replaceAll('{name}',G.name);
-function drawPortrait(canvas,who){
-  const c=canvas.getContext('2d'), sp=SPEAKERS[who]();
-  c.clearRect(0,0,canvas.width,canvas.height);
-  if(sp.chip) drawChip(c,42,88,0.4,1.7); else drawChibi(c,42,92,{look:sp.look,dir:'down',t:0.5,scale:1.15});
-}
-const Dialogue = {
-  active:false, lines:[], i:0, done:null, typing:false, full:'', pos:0, timer:null,
-  open(lines,done){
-    this.lines=lines.map(l=>({who:l.who,text:fmt(l.text)})); this.i=0; this.done=done||null; this.active=true;
-    $('#dialog').classList.remove('hidden'); $('#btnAct').classList.add('hidden'); this.say();
-  },
-  say(){
-    const l=this.lines[this.i]; $('#dlgName').textContent=SPEAKERS[l.who]().name; drawPortrait($('#dlgPortrait'),l.who);
-    this.full=l.text; this.pos=0; this.typing=true; $('#dlgText').textContent='';
-    $('#dlgNext').textContent=(this.i===this.lines.length-1)?'Xong ✓':'Tiếp ▶';
-    clearInterval(this.timer);
-    this.timer=setInterval(()=>{ this.pos+=2; $('#dlgText').textContent=this.full.slice(0,this.pos); if(this.pos>=this.full.length){ clearInterval(this.timer); this.typing=false; } },16);
-    Sound.blip();
-  },
-  next(){
-    if(!this.active) return;
-    if(this.typing){ clearInterval(this.timer); this.typing=false; $('#dlgText').textContent=this.full; return; }
-    Sound.click(); this.i++;
-    if(this.i>=this.lines.length) this.close(); else this.say();
-  },
-  close(){ clearInterval(this.timer); this.active=false; $('#dialog').classList.add('hidden'); const d=this.done; this.done=null; if(d) d(); }
-};
-
-/* =====================================================================
-   10. MÔ PHỎNG BỘ ĐẾM 2 BIT (mô hình giáo dục, 1 nguồn dữ liệu cho cả waveform)
-   Mỗi phần tử hist = MỘT NỬA chu kỳ clock. Giá trị rst trong phần tử cuối là giá trị đang giữ;
-   khi tới cạnh, mạch "lấy mẫu" rst đó. mode 'good': đếm ở cạnh lên; 'bug': đếm ở cạnh xuống (lỗi).
-   ===================================================================== */
-const Sim = {
-  create(mode){ return {mode, hist:[{clk:0,rst:0,q:0,edge:null,active:false,rises:0,rstSampled:0}]}; },
-  cur(s){ return s.hist[s.hist.length-1]; },
-  setRst(s,v){ this.cur(s).rst=v?1:0; },
-  step(s){
-    const c=this.cur(s), nclk=1-c.clk, rise=nclk===1;
-    const active = s.mode==='good' ? rise : !rise;
-    let q=c.q, reset=false;
-    if(active){ if(c.rst===1){ q=0; reset=c.q!==0; } else q=(c.q+1)&3; }
-    const ev={edge:rise?'rise':'fall',active,rstSampled:c.rst,qBefore:c.q,qAfter:q,changed:q!==c.q,reset};
-    s.hist.push({clk:nclk,rst:c.rst,q,edge:ev.edge,active,rises:c.rises+(rise?1:0),rstSampled:c.rst});
-    if(s.hist.length>400) s.hist.shift();
-    return ev;
-  },
-  describe(ev){
-    const e=ev.edge==='rise'?'Cạnh LÊN của clk':'Cạnh XUỐNG của clk';
-    if(!ev.active) return `${e}: mạch không phản ứng ở cạnh này → Q giữ ${bin(ev.qAfter)}.`;
-    if(ev.rstSampled===1) return `${e}: lấy mẫu rst = 1 → Q = 00 (reset đồng bộ).`;
-    return `${e}: rst = 0 → Q = ${bin(ev.qBefore)} + 1 = ${bin(ev.qAfter)}.`;
-  },
-  draw(canvas,s){
-    const dpr=canvas._dpr||1, c=canvas.getContext('2d'), Wd=canvas.width/dpr, Hd=canvas.height/dpr;
-    c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,Wd,Hd);
-    const N=16, lm=96, pw=(Wd-lm-12)/N, hist=s.hist, start=Math.max(0,hist.length-N), n=hist.length-start;
-    const rows={clk:[22,58],rst:[100,136],q:[176,224]};
-    c.font='bold 14px "Segoe UI",sans-serif'; c.textAlign='left'; c.fillStyle=PAL.ink;
-    c.fillText('clk',12,44); c.fillText('rst',12,122); c.fillText('Q[1:0]',12,204);
-    c.font='11px "Segoe UI",sans-serif'; c.fillStyle=PAL.ink2; c.fillText('(đồng bộ, mức cao)',12,138);
-    // phần phase hiện tại
-    const cx=lm+(n-1)*pw; c.fillStyle='rgba(255,240,184,.55)'; c.fillRect(cx,6,pw,Hd-24);
-    c.fillStyle=PAL.ink2; c.font='11px "Segoe UI",sans-serif'; c.textAlign='center'; c.fillText('bây giờ',cx+pw/2,Hd-6);
-    // đường dọc tại các cạnh
-    for(let i=start;i<hist.length;i++){ const e=hist[i]; if(!e.edge) continue; const x=lm+(i-start)*pw;
-      c.setLineDash([4,4]); c.strokeStyle=e.active?PAL.coral:'rgba(122,115,144,.35)'; c.lineWidth=e.active?1.6:1; c.beginPath(); c.moveTo(x,8); c.lineTo(x,Hd-20); c.stroke(); c.setLineDash([]);
-      c.fillStyle=e.active?PAL.coral:PAL.ink2; c.font='bold 11px "Segoe UI",sans-serif'; c.textAlign='center'; c.fillText(e.edge==='rise'?'▲':'▼',x,14);
-      if(e.edge==='rise'){ c.fillStyle=PAL.ink2; c.font='10px "Segoe UI",sans-serif'; c.fillText(String(e.rises),x+pw/2,Hd-6); }
-    }
-    // clk & rst
-    const step=(key,[yh,yl],col)=>{ c.strokeStyle=col; c.lineWidth=2.5; c.beginPath();
-      for(let i=start;i<hist.length;i++){ const x0=lm+(i-start)*pw, y=hist[i][key]?yh:yl; if(i===start) c.moveTo(x0,y); else c.lineTo(x0,y); c.lineTo(x0+pw,y); } c.stroke(); };
-    step('clk',rows.clk,'#5aa9d6'); step('rst',rows.rst,'#e0587a');
-    // chấm lấy mẫu rst ở cạnh kích hoạt
-    for(let i=Math.max(start,1);i<hist.length;i++){ const e=hist[i]; if(e.edge&&e.active){ const x=lm+(i-start)*pw, y=e.rstSampled?rows.rst[0]:rows.rst[1]; c.beginPath(); c.arc(x,y,4.5,0,7); c.fillStyle='#fff'; c.fill(); c.strokeStyle=PAL.coral; c.lineWidth=2; c.stroke(); } }
-    // bus Q
-    let i=start;
-    while(i<hist.length){ let j=i; while(j+1<hist.length&&hist[j+1].q===hist[i].q) j++;
-      const xa=lm+(i-start)*pw, xb=lm+(j-start+1)*pw, yt=rows.q[0], yb=rows.q[1], ym=(yt+yb)/2, k=Math.min(6,(xb-xa)/2);
-      c.beginPath(); c.moveTo(xa+k,yt); c.lineTo(xb-k,yt); c.lineTo(xb,ym); c.lineTo(xb-k,yb); c.lineTo(xa+k,yb); c.lineTo(xa,ym); c.closePath();
-      c.fillStyle=hist[i].q===0?'#e4f6ee':'#f1e9ff'; c.fill(); c.strokeStyle='#8f7fd1'; c.lineWidth=2; c.stroke();
-      c.fillStyle=PAL.ink; c.font='bold 15px Consolas,monospace'; c.textAlign='center'; c.fillText(bin(hist[i].q),(xa+xb)/2,ym+5);
-      i=j+1; }
-  }
-};
-
-/* =====================================================================
-   11. KHUNG NHIỆM VỤ (Host) – dùng chung cho 5 nhiệm vụ tương tác
-   ===================================================================== */
-const Host = {
-  active:false, n:0, q:null,
-  open(n){
-    this.n=n; this.q=Quests[n]; this.active=true;
-    $('#quest').classList.remove('hidden'); $('#btnAct').classList.add('hidden');
-    $('#qTitle').textContent='Nhiệm vụ '+n+' – '+QUEST_TITLES[n-1];
-    const pen=diff().hintPenalty; $('#qHint').textContent='Gợi ý'+(pen?` (−${pen} điểm)`:'');
-    $('#qBody').innerHTML=''; $('#qResult').innerHTML=''; this.fb('');
-    this.q.build($('#qBody'),this);
-  },
-  close(){
-    if(!this.active) return; if(this.q&&this.q.cleanup) this.q.cleanup();
-    this.active=false; $('#quest').classList.add('hidden'); $('#qBody').innerHTML='';
-  },
-  fb(html,kind){ const e=$('#qFb'); e.className=html?('show '+(kind||'info')):''; e.innerHTML=html||''; },
-  wrong(html){ attempt(this.n).wrong++; save(); Sound.bad(); this.fb(html,'bad'); },
-  hint(){
-    const txt=this.q.hint?this.q.hint():null; if(!txt) return;
-    attempt(this.n).hints++; save(); UI.updateHud(); Sound.click(); this.fb('💡 <b>Gợi ý:</b> '+txt,'info');
-  },
-  success(html,lines){
-    Sound.ok(); this.fb('');
-    const r=$('#qResult'); r.innerHTML='';
-    r.append(h('div',{class:'card',style:'border-color:var(--ok);background:var(--mint)',html:'<b>✓ Chính xác! Vì sao đúng?</b><br>'+html}),
-      h('div',{class:'row c'},h('button',{class:'btn ok',onclick:()=>Game.completeQuest(this.n,lines)},'Hoàn thành nhiệm vụ ▶')));
-    r.scrollIntoView({block:'nearest'});
-  }
-};
-
-const Quests = {};
-
-/* ---------- Nhiệm vụ 1: chọn tín hiệu vào/ra ---------- */
-const Q1_SIGNALS=[
-  {id:'clk', dir:'in', label:'clk', sub:'xung nhịp, 1 bit', ok:true, miss:'Mạch đồng bộ cần clock để biết khi nào cập nhật.'},
-  {id:'rst', dir:'in', label:'rst', sub:'reset đồng bộ mức cao, 1 bit', ok:true, miss:'Đề có yêu cầu reset để đưa bộ đếm về 00.'},
-  {id:'en',  dir:'in', label:'enable', sub:'cho phép đếm', ok:false, why:'Đề không có tín hiệu cho phép đếm: bộ đếm đếm ở mọi cạnh lên của clock.'},
-  {id:'din', dir:'in', label:'data_in[1:0]', sub:'dữ liệu nạp vào', ok:false, why:'Đề không nạp giá trị ban đầu; chỉ reset mới đưa về 00.'},
-  {id:'q',   dir:'out',label:'Q[1:0]', sub:'giá trị đếm, 2 bit', ok:true, miss:'Cần ngõ ra Q 2 bit để đưa giá trị đếm ra ngoài.'},
-  {id:'q8',  dir:'out',label:'Q[7:0]', sub:'8 bit', ok:false, why:'Đếm 00 → 11 chỉ cần 2 bit, không phải 8 bit.'},
-  {id:'done',dir:'out',label:'done', sub:'báo hoàn tất', ok:false, why:'Bộ đếm lặp vòng liên tục, đề không có tín hiệu “hoàn tất”.'}
-];
-Quests[1]={
-  build(body,host){
-    const sel=new Set(), btns={};
-    const mk=s=>{ const b=h('button',{class:'sig',onclick:()=>{ Sound.click(); if(sel.has(s.id)){sel.delete(s.id);b.classList.remove('sel');} else {sel.add(s.id);b.classList.add('sel');} b.classList.remove('bad','good'); }},h('b',null,s.label),h('div',{class:'small'},s.sub)); btns[s.id]=b; return b; };
-    body.append(
-      h('div',{class:'card',html:`<b>Đề bài của ${esc(CONFIG.teacher.name)}</b><br>Thiết kế <b>mạch đếm 2 bit</b>: đếm theo chu kỳ <b>00 → 01 → 10 → 11 → 00</b> ở mỗi <b>cạnh lên</b> của clock, có <b>reset đồng bộ mức cao</b>.<br><span class="small">Hãy bấm chọn các thẻ tín hiệu mà mạch THỰC SỰ cần (bấm lần nữa để bỏ chọn).</span>`}),
-      h('div',{class:'cols'},
-        h('div',null,h('h3',{style:'margin:4px 0'},'Ngõ vào (input)'),Q1_SIGNALS.filter(s=>s.dir==='in').map(mk)),
-        h('div',null,h('h3',{style:'margin:4px 0'},'Ngõ ra (output)'),Q1_SIGNALS.filter(s=>s.dir==='out').map(mk))),
-      h('div',{class:'row c'},h('button',{class:'btn',onclick:()=>{
-        const msgs=[]; let bad=false;
-        for(const s of Q1_SIGNALS){ const b=btns[s.id]; b.classList.remove('bad','good');
-          if(s.ok&&!sel.has(s.id)){ bad=true; msgs.push(`Còn thiếu <b>${esc(s.label)}</b>: ${s.miss}`); }
-          else if(!s.ok&&sel.has(s.id)){ bad=true; b.classList.add('bad'); msgs.push(`<b>${esc(s.label)}</b> chưa cần: ${s.why}`); }
-          else if(s.ok) b.classList.add('good'); }
-        if(bad) host.wrong('Chưa đúng, thử lại nhé (tiến độ vẫn được giữ):<ul class="clean">'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>');
-        else host.finish1();
-      }},'Kiểm tra lựa chọn')));
-    host.finish1=()=>{ Game.completeQuest(1,TEXT.q1done); };
-  },
-  hint(){ return 'Đọc lại đề: mạch có nhịp clock, có reset và một ngõ ra 2 bit. Thứ gì đề không nhắc (enable, nạp dữ liệu, done…) thì chưa cần.'; }
-};
-
-/* ---------- Nhiệm vụ 2: sơ đồ khối (kéo thả / bấm, nối dây) ---------- */
-const B2=[
-  {id:'clk',label:'CLK',sub:'xung nhịp',w:100,h:46,ports:[{id:'out',side:'out',x:100,y:23,name:''}],def:[190,40]},
-  {id:'rst',label:'RST',sub:'reset mức cao',w:100,h:46,ports:[{id:'out',side:'out',x:100,y:23,name:''}],def:[190,230]},
-  {id:'cnt',label:'Bộ đếm 2 bit',sub:'counter2',w:150,h:96,ports:[{id:'clk',side:'in',x:0,y:34,name:'clk'},{id:'rst',side:'in',x:0,y:66,name:'rst'},{id:'q',side:'out',x:150,y:50,name:'Q[1:0]'}],def:[340,110]},
-  {id:'disp',label:'Hiển thị Q',sub:'2 đèn LED',w:100,h:60,ports:[{id:'in',side:'in',x:0,y:30,name:'Q'}],def:[540,128]},
-  {id:'alu',label:'Bộ cộng 8 bit',sub:'(thử xem)',w:110,h:46,ports:[{id:'a',side:'in',x:0,y:23,name:'a'},{id:'s',side:'out',x:110,y:23,name:'s'}],def:[350,270]}
-];
-const W2_REQ=[['clk.out','cnt.clk'],['rst.out','cnt.rst'],['cnt.q','disp.in']];
-const BNAME={clk:'CLK',rst:'RST',cnt:'Bộ đếm 2 bit',disp:'Hiển thị Q',alu:'Bộ cộng 8 bit'};
-function wireWhy(from,to){
-  if(from==='clk.out'&&to==='cnt.rst') return 'Dây từ CLK đang nối vào cổng <b>rst</b>: clock phải vào cổng <b>clk</b>.';
-  if(from==='rst.out'&&to==='cnt.clk') return 'Dây từ RST đang nối vào cổng <b>clk</b>: reset phải vào cổng <b>rst</b>.';
-  if(from.startsWith('alu')||to.startsWith('alu')) return 'Bộ cộng 8 bit không thuộc thiết kế này (đã có bộ đếm 2 bit).';
-  return `Dây ${from} → ${to} không có trong sơ đồ yêu cầu.`;
-}
-Quests[2]={
-  build(body,host){
-    let ty=34; const blocks=B2.map(b=>{ const o={...b,placed:false,x:0,y:0,tx:12,ty}; ty+=b.h+10; return o; });
-    const S={blocks,wires:[],sel:null};
-    const svg=sv('svg',{viewBox:'0 0 700 390',class:'diagram'});
-    const gBg=sv('g'),gWires=sv('g'),gBlocks=sv('g'); svg.append(gBg,gWires,gBlocks);
-    gBg.append(sv('rect',{x:0,y:0,width:165,height:390,fill:'#f4f0fb'}),sv('text',{x:12,y:22,'font-size':14,'font-weight':700,fill:PAL.ink2},'Khay khối'),
-      sv('text',{x:182,y:22,'font-size':14,'font-weight':700,fill:PAL.ink2},'Bảng trắng (thả khối vào đây)'));
-    const pos=b=>b.placed?[b.x,b.y]:[b.tx,b.ty];
-    const P=(bid,pid)=>{ const b=blocks.find(x=>x.id===bid), p=b.ports.find(x=>x.id===pid), [x,y]=pos(b); return [x+p.x,y+p.y]; };
-    const toSvg=e=>{ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
-    function drawWires(){
-      gWires.innerHTML='';
-      for(const w of S.wires){ const [f1,f2]=w.from.split('.'),[t1,t2]=w.to.split('.'); const a=P(f1,f2),b=P(t1,t2);
-        const d=`M${a[0]} ${a[1]} C${a[0]+60} ${a[1]},${b[0]-60} ${b[1]},${b[0]} ${b[1]}`;
-        gWires.append(sv('path',{d,fill:'none',stroke:'#8f7fd1','stroke-width':3.5,'stroke-linecap':'round'}),
-          sv('path',{d,fill:'none',stroke:'transparent','stroke-width':16,style:'cursor:pointer',onclick:null,'data-w':w.from+'>'+w.to}));
-      }
-      gWires.querySelectorAll('[data-w]').forEach(p=>p.addEventListener('pointerdown',e=>{ e.stopPropagation(); const k=p.getAttribute('data-w'); S.wires=S.wires.filter(w=>w.from+'>'+w.to!==k); Sound.click(); host.fb('Đã xóa một dây. Bạn có thể nối lại.','info'); drawWires(); }));
-    }
-    function portClick(bid,port){
-      const key=bid+'.'+port.id;
-      if(S.sel===key){ S.sel=null; renderBlocks(); return; }
-      if(!S.sel){ S.sel=key; Sound.click(); host.fb('Đã chọn cổng <b>'+key+'</b>. Bấm một cổng khác để nối.','info'); renderBlocks(); return; }
-      const [b1,p1]=S.sel.split('.'), pt1=blocks.find(b=>b.id===b1).ports.find(p=>p.id===p1);
-      if(pt1.side===port.side){ S.sel=key; host.fb('Hai cổng cùng loại. Hãy nối <b>ngõ ra</b> (chấm hồng) với <b>ngõ vào</b> (chấm xanh).','bad'); Sound.bad(); renderBlocks(); return; }
-      const from=pt1.side==='out'?S.sel:key, to=pt1.side==='out'?key:S.sel;
-      S.wires=S.wires.filter(w=>w.to!==to); S.wires.push({from,to}); S.sel=null; Sound.click();
-      host.fb(`Đã nối <b>${from}</b> → <b>${to}</b>. Bấm vào dây để xóa nếu muốn sửa.`,'info'); renderBlocks(); drawWires();
-    }
-    function renderBlocks(){
-      gBlocks.innerHTML='';
-      for(const b of blocks){
-        if(b.placed) gBlocks.append(sv('rect',{x:b.tx,y:b.ty,width:b.w,height:b.h,rx:10,fill:'none',stroke:'#cbbfe8','stroke-dasharray':'5 4'}));
-        const [x,y]=pos(b), g=sv('g',{transform:`translate(${x},${y})`,style:'cursor:grab','data-b':b.id});
-        const col={clk:PAL.sky,rst:PAL.pink,cnt:PAL.mint,disp:PAL.butter,alu:'#e9e4f2'}[b.id];
-        g.append(sv('rect',{width:b.w,height:b.h,rx:10,fill:col,stroke:PAL.ink2,'stroke-width':2.5}),
-          sv('text',{x:b.w/2,y:b.ports.length>=3?18:b.h/2-(b.sub?2:-5),'text-anchor':'middle','font-size':b.w>120?14:15,'font-weight':800,fill:PAL.ink},b.label),
-          sv('text',{x:b.w/2,y:b.ports.length>=3?b.h-8:b.h/2+14,'text-anchor':'middle','font-size':11,fill:PAL.ink2},b.sub));
-        if(b.placed){ const x2=sv('g',{style:'cursor:pointer'},sv('circle',{cx:b.w-2,cy:2,r:9,fill:'#fff',stroke:PAL.ink2}),sv('text',{x:b.w-2,y:6,'text-anchor':'middle','font-size':12,'font-weight':800,fill:PAL.bad||'#e0587a'},'✕'));
-          x2.addEventListener('pointerdown',e=>{ e.stopPropagation(); b.placed=false; S.wires=S.wires.filter(w=>!w.from.startsWith(b.id+'.')&&!w.to.startsWith(b.id+'.')); S.sel=null; Sound.click(); renderBlocks(); drawWires(); });
-          g.append(x2);
-          for(const p of b.ports){
-            const key=b.id+'.'+p.id, c=sv('circle',{cx:p.x,cy:p.y,r:8,fill:p.side==='out'?'#ff9eb5':'#7ecbe8',stroke:S.sel===key?'#4a4458':'#fff','stroke-width':S.sel===key?4:3,style:'cursor:crosshair'});
-            c.addEventListener('pointerdown',e=>{ e.stopPropagation(); e.preventDefault(); portClick(b.id,p); });
-            g.append(c);
-            if(p.name) g.append(sv('text',{x:p.side==='in'?13:p.x-13,y:p.y+4,'text-anchor':p.side==='in'?'start':'end','font-size':11,'font-weight':700,fill:PAL.ink},p.name));
-          }
-        }
-        g.addEventListener('pointerdown',e=>startDrag(e,b,g));
-        gBlocks.append(g);
-      }
-    }
-    function startDrag(e,b,g){
-      e.preventDefault(); const p0=toSvg(e), [bx,by]=pos(b), ox=p0.x-bx, oy=p0.y-by; let moved=false;
-      const move=ev=>{ const p=toSvg(ev); if(Math.hypot(p.x-p0.x,p.y-p0.y)>4) moved=true; if(!moved) return;
-        const nx=clamp(p.x-ox,0,700-b.w), ny=clamp(p.y-oy,0,390-b.h); b.x=nx; b.y=ny; b._drag=true; g.setAttribute('transform',`translate(${nx},${ny})`); if(b.placed) drawWires(); };
-      const up=ev=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); b._drag=false;
-        if(!moved){ if(!b.placed){ b.placed=true; [b.x,b.y]=b.def; Sound.click(); host.fb('Đã đặt khối <b>'+BNAME[b.id]+'</b>.','info'); } }
-        else { if(b.x+b.w/2>=170){ b.placed=true; Sound.click(); } else { b.placed=false; S.wires=S.wires.filter(w=>!w.from.startsWith(b.id+'.')&&!w.to.startsWith(b.id+'.')); } }
-        renderBlocks(); drawWires(); };
-      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
-    }
-    function check(){
-      const msgs=[]; const placed=blocks.filter(b=>b.placed).map(b=>b.id);
-      for(const id of ['clk','rst','cnt','disp']) if(!placed.includes(id)) msgs.push(`Chưa đặt khối <b>${BNAME[id]}</b> lên bảng.`);
-      if(placed.includes('alu')) msgs.push('<b>Bộ cộng 8 bit</b> không cần cho bài này, hãy gỡ nó (bấm ✕).');
-      for(const w of S.wires) if(!W2_REQ.some(r=>r[0]===w.from&&r[1]===w.to)) msgs.push(wireWhy(w.from,w.to));
-      for(const r of W2_REQ) if(!S.wires.some(w=>w.from===r[0]&&w.to===r[1])){
-        if(r[0]==='clk.out') msgs.push('Chưa nối <b>CLK → clk</b> của bộ đếm.'); else if(r[0]==='rst.out') msgs.push('Chưa nối <b>RST → rst</b> của bộ đếm.'); else msgs.push('Chưa nối <b>Q[1:0] của bộ đếm → Hiển thị Q</b>.'); }
-      if(msgs.length){ host.wrong('Sơ đồ chưa đúng, chỉnh lại nhé:<ul class="clean">'+[...new Set(msgs)].map(m=>'<li>'+m+'</li>').join('')+'</ul>'); return; }
-      host.success('<ul class="clean"><li><b>CLK → clk</b>: bộ đếm cần nhịp clock để biết lúc nào cập nhật (ở cạnh lên).</li><li><b>RST → rst</b>: reset đưa bộ đếm về 00.</li><li><b>Q[1:0] → Hiển thị</b>: giá trị đếm 2 bit đi ra khối hiển thị; dây luôn đi một chiều từ ngõ ra sang ngõ vào.</li></ul>',TEXT.q2done);
-    }
-    this._check=check; this._state=S;
-    body.append(
-      h('div',{class:'card',html:'<b>Yêu cầu:</b> clock và reset đi vào bộ đếm 2 bit; Q đi đến khối hiển thị.<br><span class="small"><b>Kéo thả</b> khối từ khay sang bảng (hoặc <b>bấm</b> vào khối để tự đặt). Bấm một chấm <span style="color:#ff6f95">hồng (ngõ ra)</span> rồi một chấm <span style="color:#2f8fc0">xanh (ngõ vào)</span> để nối. Bấm vào dây để xóa, ✕ để gỡ khối. Có một khối thừa đó!</span>'}),
-      svg,
-      h('div',{class:'row c',style:'margin-top:10px'},
-        h('button',{class:'btn',onclick:check},'Kiểm tra sơ đồ'),
-        h('button',{class:'btn ghost',onclick:()=>{ S.wires=[]; S.sel=null; renderBlocks(); drawWires(); host.fb('Đã xóa hết dây.','info'); }},'Xóa tất cả dây'),
-        h('button',{class:'btn ghost',onclick:()=>{ blocks.forEach(b=>b.placed=false); S.wires=[]; S.sel=null; renderBlocks(); drawWires(); host.fb(''); }},'Đặt lại')));
-    renderBlocks(); drawWires();
-  },
-  hint(){
-    const S=this._state; const placed=S.blocks.filter(b=>b.placed).map(b=>b.id);
-    if(!['clk','rst','cnt','disp'].every(i=>placed.includes(i))) return 'Cần 4 khối: CLK, RST, Bộ đếm 2 bit và Hiển thị Q. Khối “Bộ cộng 8 bit” là khối thừa.';
-    return 'Có 3 dây: CLK → cổng clk, RST → cổng rst (cả hai vào bộ đếm), và Q[1:0] của bộ đếm → Hiển thị Q.';
-  }
-};
-
-/* ---------- Nhiệm vụ 3: hoàn thiện RTL (VHDL) ---------- */
-const Q3_CODE=[
- 'library ieee;','use ieee.std_logic_1164.all;','use ieee.{1}.all;','',
- 'entity counter2 is','  port ( clk : in  std_logic;','         rst : in  std_logic;','         q   : out std_logic_vector(1 downto 0) );','end entity;','',
- 'architecture rtl of counter2 is','  signal cnt : {2} := "00";','begin','  process(clk)','  begin',
- '    if {3} then','      if {4} then','        cnt <= {5};','      else','        cnt <= {6};','      end if;','    end if;','  end process;','',
- '  q <= std_logic_vector(cnt);','end architecture;'
-];
-const Q3_B={
- 1:{label:'thư viện',hint:'Kiểu unsigned chuẩn IEEE nằm trong thư viện có tên bắt đầu bằng “numeric”.',opts:[
-   {t:'std_logic_arith',ok:false,why:'std_logic_arith không phải thư viện chuẩn IEEE; đề yêu cầu dùng ieee.numeric_std.'},
-   {t:'numeric_std',ok:true},
-   {t:'std_logic_unsigned',ok:false,why:'std_logic_unsigned cũng không chuẩn IEEE và không cung cấp kiểu unsigned.'},
-   {t:'textio',ok:false,why:'textio dùng để đọc/ghi file văn bản, không có kiểu unsigned.'}]},
- 2:{label:'kiểu của cnt',hint:'Bộ đếm 2 bit, đếm số không dấu: cần kiểu unsigned có độ rộng 2 bit.',opts:[
-   {t:'unsigned(7 downto 0)',ok:false,why:'8 bit là quá rộng; bộ đếm 2 bit chỉ cần (1 downto 0).'},
-   {t:'std_logic',ok:false,why:'std_logic chỉ có 1 bit, không đếm tới 11 được.'},
-   {t:'unsigned(1 downto 0)',ok:true},
-   {t:'integer',ok:false,why:'integer không có độ rộng bit rõ ràng, khó đảm bảo đúng 2 bit.'}]},
- 3:{label:'điều kiện clock',hint:'Mạch chạy ở cạnh lên của clock: hàm VHDL tên rising_edge.',opts:[
-   {t:'falling_edge(clk)',ok:false,why:'falling_edge là cạnh XUỐNG, đề yêu cầu cạnh lên.'},
-   {t:"clk = '1'",ok:false,why:"clk = '1' là kiểm tra MỨC cao (kéo dài nửa chu kỳ), không phải một cạnh."},
-   {t:"clk'event",ok:false,why:"clk'event đúng ở cả cạnh lên lẫn cạnh xuống (mọi thay đổi)."},
-   {t:'rising_edge(clk)',ok:true}]},
- 4:{label:'điều kiện reset',hint:'Reset tích cực mức cao nghĩa là reset khi rst bằng 1. Điều kiện này nằm TRONG khối cạnh lên nên là reset đồng bộ.',opts:[
-   {t:"rst = '0'",ok:false,why:"rst = '0' là reset tích cực mức THẤP; đề yêu cầu mức cao."},
-   {t:"rst = '1'",ok:true},
-   {t:"rst'event",ok:false,why:"rst'event chỉ bắt thay đổi của rst, không kiểm tra mức, và sẽ thành reset không đồng bộ."}]},
- 5:{label:'giá trị khi reset',hint:'Khi reset thì bộ đếm về 00.',opts:[
-   {t:'cnt + 1',ok:false,why:'Reset không được làm bộ đếm tăng; phải đưa về 00.'},
-   {t:'"11"',ok:false,why:'Reset phải đưa về 00, không phải 11.'},
-   {t:'"00"',ok:true},
-   {t:"(others => '1')",ok:false,why:'Toàn bit 1 là 11, trong khi reset cần về 00.'}]},
- 6:{label:'khi không reset',hint:'Mỗi cạnh lên (không reset) bộ đếm tăng thêm 1, 11 tăng 1 sẽ tràn về 00.',opts:[
-   {t:'cnt - 1',ok:false,why:'cnt - 1 là đếm lùi; đề yêu cầu đếm lên.'},
-   {t:'cnt + 1',ok:true},
-   {t:'cnt',ok:false,why:'Giữ nguyên thì bộ đếm không bao giờ đếm.'},
-   {t:'cnt + 2',ok:false,why:'Tăng 2 sẽ bỏ qua giá trị (00 → 10), không đúng chu kỳ 00 → 01 → 10 → 11.'}]}
-};
-const Q3_EXPLAIN=[
- ['use ieee.numeric_std.all;','Thư viện chuẩn cho kiểu unsigned và phép cộng với số nguyên.'],
- ['signal cnt : unsigned(1 downto 0)','Biến nội bộ 2 bit lưu giá trị đếm. Khởi tạo "00" cho mô phỏng.'],
- ['process(clk)','Quá trình chỉ cần “nghe” clk vì đây là mạch đồng bộ.'],
- ['if rising_edge(clk) then','Mọi thứ xảy ra ở cạnh lên của clock.'],
- ["if rst = '1' then cnt <= \"00\"",'Reset đồng bộ: rst được kiểm tra BÊN TRONG cạnh lên, nên reset chỉ có tác dụng ở cạnh lên khi rst = 1.'],
- ['else cnt <= cnt + 1;','Không reset thì tăng 1. Vì cnt chỉ có 2 bit, 11 + 1 quay về 00 (đúng chu kỳ yêu cầu).'],
- ['q <= std_logic_vector(cnt);','Đổi unsigned sang std_logic_vector để đưa ra cổng.']
-];
-Quests[3]={
-  build(body,host){
-    const S={pick:{},cur:null,done:false};
-    this._S=S;
-    const pre=h('pre',{class:'code'}); const optsBox=h('div',{class:'opts'}); const info=h('div',{class:'small',style:'margin-bottom:6px'});
-    const expl=h('div',{class:'card hidden'});
-    function paint(res){
-      pre.innerHTML='';
-      Q3_CODE.forEach((ln,li)=>{
-        const parts=ln.split(/(\{\d\})/);
-        for(const part of parts){ const m=part.match(/^\{(\d)\}$/);
-          if(!m) { pre.append(part); continue; }
-          const k=+m[1], pk=S.pick[k], b=h('button',{class:'blank'+(pk!=null?' filled':'')+(S.cur===k?' cur':'')+(res&&res[k]?' '+res[k]:''),title:'Bấm để chọn mảnh code',onclick:()=>{ S.cur=k; Sound.click(); paint(res); showOpts(); }},pk!=null?Q3_B[k].opts[pk].t:`[ ${k}: ? ]`);
-          pre.append(b); }
-        pre.append('\n');
-      });
-    }
-    function showOpts(){
-      optsBox.innerHTML=''; if(S.cur==null){ info.textContent='Bấm vào một chỗ trống [ ? ] trong code để chọn mảnh phù hợp.'; return; }
-      const B=Q3_B[S.cur]; info.innerHTML=`Chỗ trống <b>${S.cur}</b> – ${B.label}:`;
-      B.opts.forEach((o,i)=>optsBox.append(h('button',{class:'opt'+(S.pick[S.cur]===i?' sel':''),onclick:()=>{ if(S.done) return; S.pick[S.cur]=i; Sound.click(); paint(); showOpts(); }},o.t)));
-    }
-    function check(){
-      if(S.done) return; const res={}, msgs=[]; let bad=false;
-      for(let k=1;k<=6;k++){ const pk=S.pick[k];
-        if(pk==null){ bad=true; msgs.push(`Chỗ trống ${k} (${Q3_B[k].label}) chưa chọn.`); }
-        else if(Q3_B[k].opts[pk].ok) res[k]='good';
-        else { bad=true; res[k]='bad'; msgs.push(`Chỗ trống ${k}: <code>${esc(Q3_B[k].opts[pk].t)}</code> – ${Q3_B[k].opts[pk].why}`); } }
-      paint(res);
-      if(bad){ host.wrong('Chưa đúng hết (các chỗ đúng đã tô xanh, giữ nguyên):<ul class="clean">'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>'); return; }
-      S.done=true; optsBox.innerHTML=''; info.textContent='Code hoàn chỉnh!';
-      host.success('<ul class="clean"><li><code>rising_edge(clk)</code>: chỉ phản ứng ở cạnh lên của clock.</li><li><code>rst = \'1\'</code> nằm <b>bên trong</b> điều kiện cạnh lên → reset <b>đồng bộ</b>, tích cực mức cao.</li><li><code>unsigned(1 downto 0)</code> với <code>ieee.numeric_std</code>: cnt + 1 đúng chuẩn, và 11 + 1 tự quay về 00.</li></ul>',TEXT.q3done);
-    }
-    this._check=check; this._paint=paint; this._show=showOpts;
-    body.append(
-      h('div',{class:'card',html:'Hoàn thiện bộ đếm 2 bit bằng VHDL: bấm chỗ trống rồi chọn mảnh code. Bạn <b>không cần tự gõ</b> code. Nút <b>Giải thích code</b> miễn phí; nút <b>Gợi ý</b> ở phía trên có thể bị trừ điểm.'}),
-      pre,info,optsBox,
-      h('div',{class:'row c'},h('button',{class:'btn',onclick:check},'Kiểm tra code'),
-        h('button',{class:'btn alt',onclick:()=>{ Sound.click(); expl.classList.toggle('hidden'); }},'Giải thích code'),
-        h('button',{class:'btn ghost',onclick:()=>{ if(S.done) return; S.pick={}; S.cur=null; paint(); showOpts(); host.fb(''); }},'Xóa lựa chọn')),
-      expl);
-    expl.innerHTML='<b>Giải thích từng phần:</b><ul class="clean">'+Q3_EXPLAIN.map(e=>`<li><code>${esc(e[0])}</code> – ${esc(e[1])}</li>`).join('')+'</ul>';
-    paint(); showOpts();
-  },
-  hint(){
-    const S=this._S; let k=S.cur;
-    if(k==null||(S.pick[k]!=null&&Q3_B[k].opts[S.pick[k]].ok)){ k=null; for(let i=1;i<=6;i++) if(S.pick[i]==null||!Q3_B[i].opts[S.pick[i]].ok){ k=i; break; } }
-    if(k==null) return 'Tất cả đã đúng, bấm “Kiểm tra code” nhé!';
-    return `Chỗ trống ${k} (${Q3_B[k].label}): ${Q3_B[k].hint}`;
-  }
-};
-
-/* ---------- Nhiệm vụ 4: mô phỏng waveform + sửa lỗi cạnh xuống ---------- */
-const Q4_DIAG=[
-  {t:'Q đổi giá trị ở cạnh XUỐNG của clock thay vì cạnh lên', ok:true},
-  {t:'Reset đang hoạt động ở mức thấp', ok:false, why:'Reset không phải vấn đề: rst vẫn là mức cao. Hãy nhìn kỹ Q đổi vào cạnh nào của clk.'},
-  {t:'Bộ đếm đang đếm lùi (11 → 10 → 01)', ok:false, why:'Q vẫn tăng dần 00 → 01 → 10 → 11, không đếm lùi.'},
-  {t:'Ngõ ra Q bị rộng hơn 2 bit', ok:false, why:'Q vẫn chỉ có 2 bit (00..11). Lỗi nằm ở thời điểm Q đổi.'}
-];
-const Q4_FIX=[
-  {t:'if clk = \'0\' then', ok:false, why:'Mức 0 không phải là một cạnh: mạch sẽ tính toán liên tục suốt nửa chu kỳ clock thấp.'},
-  {t:'if rising_edge(clk) then', ok:true},
-  {t:'if falling_edge(rst) then', ok:false, why:'Cạnh phải lấy từ clock chứ không phải từ rst.'},
-  {t:'if rising_edge(rst) then', ok:false, why:'Mạch đếm theo nhịp clk; rst chỉ là tín hiệu điều khiển được kiểm tra bên trong.'}
-];
-Quests[4]={
-  cleanup(){ if(this._S) { clearInterval(this._S.timer); this._S.timer=null; } },
-  build(body,host){
-    const S={sim:Sim.create('good'),stage:'A',timer:null,speed:600,last:null,obs:{wrap:false,reset:false,bug:false,verify:0},finished:false};
-    this._S=S;
-    const dpr=Math.min(2,window.devicePixelRatio||1);
-    const cv=h('canvas',{class:'wave'}); cv._dpr=dpr; cv.width=900*dpr; cv.height=250*dpr;
-    const modeLbl=h('div',{class:'small',style:'margin:6px 0'});
-    const readout=h('div',{class:'readout'});
-    const side=h('div');
-    const btnRst=h('button',{class:'btn ghost',onclick:()=>{ Sim.setRst(S.sim,Sim.cur(S.sim).rst?0:1); Sound.click(); redraw(); }},'rst');
-    const spd=h('select',{onchange:e=>{ S.speed=+e.target.value; if(S.timer){ pause(); run(); } },style:'padding:6px;border-radius:10px;border:2px solid var(--lav)'},
-      h('option',{value:900},'Chậm'),h('option',{value:600,selected:true},'Vừa'),h('option',{value:300},'Nhanh'));
-    function redraw(){
-      Sim.draw(cv,S.sim); const c=Sim.cur(S.sim);
-      readout.innerHTML=`clk = <b>${c.clk}</b> · rst = <b>${c.rst}</b> · Q = <b>${bin(c.q)}</b> (${c.q})<br>${S.last?Sim.describe(S.last):'Nhấn “Chạy” hoặc “Tiến 1 cạnh clock” để bắt đầu.'}`;
-      btnRst.textContent='rst = '+c.rst+(c.rst?' (bấm để tắt)':' (bấm để bật)'); btnRst.className='btn '+(c.rst?'warn':'ghost');
-      modeLbl.innerHTML='Đang mô phỏng: <b>'+((S.stage==='B'||S.stage==='B2')?'bản code của '+esc(CONFIG.teammate.name):'thiết kế của bạn')+'</b>. ▲ cạnh lên, ▼ cạnh xuống; đường nét đỏ = chỗ mạch cập nhật Q; vòng tròn trên rst = lúc mạch lấy mẫu rst.';
-    }
-    function run(){ if(!S.timer) S.timer=setInterval(stepOnce,S.speed); }
-    function pause(){ clearInterval(S.timer); S.timer=null; }
-    function observe(ev){
-      const o=S.obs; const before=JSON.stringify(o);
-      if(S.stage==='A'){ if(ev.edge==='rise'&&ev.active&&ev.rstSampled===0&&ev.qBefore===3&&ev.qAfter===0) o.wrap=true; if(ev.reset) o.reset=true; }
-      else if(S.stage==='B'){ if(ev.edge==='fall'&&ev.changed) o.bug=true; }
-      else if(S.stage==='C'){ if(ev.edge==='rise'&&ev.active&&ev.changed&&!ev.rstSampled) o.verify++; }
-      if(JSON.stringify(o)!==before){ renderSide(); }
-    }
-    function stepOnce(){ const ev=Sim.step(S.sim); S.last=ev; observe(ev); redraw(); }
-    function restart(){ pause(); S.sim=Sim.create(S.sim.mode); S.last=null; redraw(); }
-    function renderSide(){
-      side.innerHTML=''; const o=S.obs;
-      if(S.stage==='A'){
-        side.append(h('b',null,'Mục tiêu 1: kiểm tra thiết kế của bạn'),
-          h('ul',{class:'chk'},h('li',{class:o.wrap?'done':''},'Quan sát Q đếm đủ vòng 00 → 01 → 10 → 11 → 00 (rst = 0).'),
-            h('li',{class:o.reset?'done':''},'Kiểm tra reset: khi Q ≠ 00, bật rst = 1 rồi cho clock đi qua một cạnh LÊN → Q về 00.')),
-          h('div',{class:'small'},'Mẹo: reset là đồng bộ nên chỉ có tác dụng ở cạnh lên của clock.'));
-        if(o.wrap&&o.reset) side.append(h('button',{class:'btn',style:'margin-top:8px',onclick:()=>{
-          pause(); S.stage='B'; S.sim=Sim.create('bug'); S.last=null; o.bug=false; Sound.ok();
-          host.fb(`💬 <b>${esc(CONFIG.teammate.name)}:</b> “Mình vừa gộp thêm code mới vào, bạn chạy thử xem có ổn không nha!”`,'info'); renderSide(); redraw(); }},'Thiết kế ổn! Nhận bản của '+CONFIG.teammate.name+' ▶'));
-      } else if(S.stage==='B'){
-        side.append(h('b',null,'Mục tiêu 2: tìm lỗi'),
-          h('ul',{class:'chk'},h('li',{class:o.bug?'done':''},'Chạy mô phỏng và quan sát Q đổi giá trị ở cạnh nào của clock.')));
-        if(!o.bug) side.append(h('div',{class:'small'},'Hãy chạy thêm vài cạnh clock rồi mới chẩn đoán nhé.'));
-        else {
-          const name='diag'; let pick=-1;
-          side.append(h('div',{style:'margin-top:6px'},h('b',null,'Lỗi nằm ở đâu?')),
-            ...Q4_DIAG.map((d,i)=>h('label',{class:'radio'},h('input',{type:'radio',name,onchange:()=>{pick=i;}}),d.t)),
-            h('button',{class:'btn',onclick:()=>{
-              if(pick<0){ host.fb('Hãy chọn một đáp án trước nhé.','info'); return; }
-              const d=Q4_DIAG[pick]; if(!d.ok){ host.wrong('Chưa đúng: '+d.why); return; }
-              Sound.ok(); S.stage='B2'; host.fb('Đúng rồi! Bản của Khoa dùng cạnh XUỐNG. Giờ chọn cách sửa.','ok'); pause(); renderSide(); redraw(); }},'Chẩn đoán'));
-        }
-      } else if(S.stage==='B2'){
-        side.append(h('b',null,'Mục tiêu 3: sửa lỗi'),
-          h('pre',{class:'code',style:'margin-top:6px',html:'process(clk)\nbegin\n  <span style="background:#a3365a">if falling_edge(clk) then</span>   <span class="cm">-- dòng lỗi</span>\n    if rst = \'1\' then cnt &lt;= "00";\n    else cnt &lt;= cnt + 1;\n    end if;\n  end if;\nend process;'}),
-          h('div',null,'Chọn dòng thay thế:'));
-        let pick=-1;
-        side.append(...Q4_FIX.map((d,i)=>h('label',{class:'radio mono'},h('input',{type:'radio',name:'fix',onchange:()=>{pick=i;}}),d.t)),
-          h('button',{class:'btn',onclick:()=>{
-            if(pick<0){ host.fb('Hãy chọn một dòng trước nhé.','info'); return; }
-            const d=Q4_FIX[pick]; if(!d.ok){ host.wrong('Chưa đúng: '+d.why); return; }
-            S.stage='C'; S.sim=Sim.create('good'); S.last=null; o.verify=0; Sound.ok();
-            host.fb('Đã sửa thành <code>rising_edge(clk)</code>. Chạy lại để kiểm chứng!','ok'); renderSide(); redraw(); }},'Áp dụng sửa'));
-      } else {
-        side.append(h('b',null,'Mục tiêu 4: kiểm chứng sau khi sửa'),
-          h('ul',{class:'chk'},h('li',{class:o.verify>=4?'done':''},`Quan sát Q tăng ở 4 cạnh LÊN liên tiếp (${Math.min(4,o.verify)}/4) và không đổi ở cạnh xuống.`)));
-        if(o.verify>=4&&!S.finished){ S.finished=true; pause();
-          host.success('<ul class="clean"><li>Trên waveform, Q chỉ đổi ở cạnh <b>lên</b> (▲) của clk: 00 → 01 → 10 → 11 → 00.</li><li>Reset đồng bộ: Q chỉ về 00 ở cạnh lên <b>khi rst đang ở mức 1</b>.</li><li>Lỗi của bản cũ là dùng <code>falling_edge</code>; sửa thành <code>rising_edge(clk)</code>.</li></ul><span class="small">Nhắc lại: đây là mô hình mô phỏng giáo dục trong game, không phải phần mềm mô phỏng HDL thực tế.</span>',TEXT.q4done); }
-      }
-    }
-    body.append(
-      h('div',{class:'note warn',html:'⚠ Đây là <b>mô hình mô phỏng giáo dục trong game</b>, không phải phần mềm mô phỏng HDL thực tế. Waveform bên dưới được vẽ từ chính trạng thái mô phỏng của game.'}),
-      modeLbl,cv,readout,
-      h('div',{class:'row'},h('button',{class:'btn ok',onclick:run},'▶ Chạy'),h('button',{class:'btn warn',onclick:pause},'⏸ Tạm dừng'),
-        h('button',{class:'btn alt',onclick:()=>{ pause(); stepOnce(); }},'⏭ Tiến 1 cạnh clock'),btnRst,
-        h('button',{class:'btn ghost',onclick:restart},'↺ Làm lại'),h('span',{class:'small'},'Tốc độ:'),spd),
-      side);
-    renderSide(); redraw();
-  },
-  hint(){
-    const S=this._S, o=S.obs;
-    if(S.stage==='A'){ if(!o.wrap) return 'Nhấn Chạy (hoặc Tiến 1 cạnh clock) và nhìn Q đổi ở mỗi cạnh LÊN (▲). Cần 4 cạnh lên để Q đi 00 → 01 → 10 → 11 → 00.'; return 'Khi Q ≠ 00, bấm nút rst để bật rst = 1, rồi tiến tới cạnh LÊN kế tiếp: Q sẽ về 00.'; }
-    if(S.stage==='B'){ return o.bug?'Nhìn các đường nét đỏ: Q thay đổi tại cạnh ▼ (xuống) chứ không phải ▲.':'Chạy thêm vài cạnh và để ý: Q đổi ở cạnh ▲ hay ▼?'; }
-    if(S.stage==='B2') return 'Đề yêu cầu cạnh lên của clock: hàm rising_edge(clk).';
-    return 'Nhấn Chạy và đếm 4 cạnh lên ▲ liên tiếp; nhớ tắt rst.';
-  }
-};
-
-/* ---------- Nhiệm vụ 5: layout trên lưới (mô hình minh họa) ---------- */
-const C5=44, OX5=12, OY5=12, COLS5=14, ROWS5=8;
-const B5=[
-  {id:'ff0',label:'FF bit 0',sub:'flip-flop',w:3,h:2,x:1,y:2,col:'#c6e6fb',pins:[{id:'d',dir:'in',row:0,name:'D'},{id:'q',dir:'out',row:0,name:'Q0'}]},
-  {id:'not',label:'NOT',sub:'',w:2,h:1,x:4,y:2,col:'#ffd3df',pins:[{id:'in',dir:'in',row:0,name:''},{id:'out',dir:'out',row:0,name:''}]},
-  {id:'xor',label:'XOR',sub:'',w:2,h:2,x:6,y:3,col:'#fff0b8',pins:[{id:'a',dir:'in',row:0,name:'a'},{id:'b',dir:'in',row:1,name:'b'},{id:'out',dir:'out',row:0,name:''}]},
-  {id:'ff1',label:'FF bit 1',sub:'flip-flop',w:3,h:2,x:8,y:3,col:'#bfe8d8',pins:[{id:'d',dir:'in',row:0,name:'D'},{id:'q',dir:'out',row:0,name:'Q1'}]}
-];
-const W5_REQ=[['ff0.q','not.in'],['not.out','ff0.d'],['ff0.q','xor.a'],['ff1.q','xor.b'],['xor.out','ff1.d']];
-const W5_NAME={'ff0.q':'Q0','not.in':'NOT.vào','not.out':'NOT.ra','ff0.d':'D của bit 0','xor.a':'XOR.a','xor.b':'XOR.b','ff1.q':'Q1','xor.out':'XOR.ra','ff1.d':'D của bit 1'};
-const L5={
-  violations(blocks){
-    const v={}; const add=(id,m)=>{ (v[id]=v[id]||[]).push(m); };
-    for(const b of blocks) if(b.x<0||b.y<0||b.x+b.w>COLS5||b.y+b.h>ROWS5) add(b.id,'nằm ngoài lưới');
-    for(let i=0;i<blocks.length;i++) for(let j=i+1;j<blocks.length;j++){
-      const a=blocks[i], b=blocks[j];
-      const gx=Math.max(a.x-(b.x+b.w),b.x-(a.x+a.w)), gy=Math.max(a.y-(b.y+b.h),b.y-(a.y+a.h));
-      if(gx<1&&gy<1){ const how=(gx<0&&gy<0)?'chồng lên':'quá sát'; add(a.id,`${how} khối ${b.label}`); add(b.id,`${how} khối ${a.label}`); }
-    }
-    return v;
-  },
-  pin(blocks,ref){ const [bid,pid]=ref.split('.'); const b=blocks.find(x=>x.id===bid), p=b.pins.find(x=>x.id===pid); return {b,p}; },
-  cell(blocks,ref){ const {b,p}=this.pin(blocks,ref); return p.dir==='in'?[b.x-1,b.y+p.row]:[b.x+b.w,b.y+p.row]; },
-  point(blocks,ref){ const {b,p}=this.pin(blocks,ref); return [OX5+(p.dir==='in'?b.x:b.x+b.w)*C5, OY5+(b.y+p.row)*C5+C5/2]; },
-  route(blocks,from,to){
-    const blocked=(x,y)=>x<0||y<0||x>=COLS5||y>=ROWS5||blocks.some(b=>x>=b.x&&x<b.x+b.w&&y>=b.y&&y<b.y+b.h);
-    const s=this.cell(blocks,from), g=this.cell(blocks,to);
-    if(blocked(s[0],s[1])||blocked(g[0],g[1])) return null;
-    const D=[[1,0],[-1,0],[0,1],[0,-1]], key=(x,y,d)=>(y*COLS5+x)*5+d;
-    const dist=new Map(), prev=new Map(), open=[]; const k0=key(s[0],s[1],4); dist.set(k0,0); open.push([0,s[0],s[1],4]);
-    let endKey=null;
-    while(open.length){
-      let bi=0; for(let i=1;i<open.length;i++) if(open[i][0]<open[bi][0]) bi=i;
-      const [cd,x,y,d]=open.splice(bi,1)[0]; const k=key(x,y,d);
-      if(cd>dist.get(k)) continue;
-      if(x===g[0]&&y===g[1]){ endKey=k; break; }
-      for(let nd=0;nd<4;nd++){ const nx=x+D[nd][0], ny=y+D[nd][1]; if(blocked(nx,ny)) continue;
-        const cost=cd+1+((d!==4&&d!==nd)?0.6:0), nk=key(nx,ny,nd);
-        if(!dist.has(nk)||cost<dist.get(nk)){ dist.set(nk,cost); prev.set(nk,k); open.push([cost,nx,ny,nd]); } }
-    }
-    if(endKey==null) return null;
-    const path=[]; let k=endKey; while(k!=null){ const d=k%5, cidx=(k-d)/5; path.push([cidx%COLS5,Math.floor(cidx/COLS5)]); k=prev.get(k); }
-    return path.reverse();
-  }
-};
-Quests[5]={
-  build(body,host){
-    const S={blocks:B5.map(b=>({...b})),wires:[],sel:null,drag:null};
-    this._S=S;
-    const svg=sv('svg',{viewBox:'0 0 640 376',class:'diagram'});
-    const status=h('div',{class:'readout'});
-    const toSvg=e=>{ const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
-    function routes(){ return S.wires.map(w=>({w,path:L5.route(S.blocks,w.from,w.to)})); }
-    function render(){
-      svg.innerHTML=''; const vio=L5.violations(S.blocks);
-      for(let i=0;i<=COLS5;i++) svg.append(sv('line',{x1:OX5+i*C5,y1:OY5,x2:OX5+i*C5,y2:OY5+ROWS5*C5,stroke:'#e5def5','stroke-width':1}));
-      for(let j=0;j<=ROWS5;j++) svg.append(sv('line',{x1:OX5,y1:OY5+j*C5,x2:OX5+COLS5*C5,y2:OY5+j*C5,stroke:'#e5def5','stroke-width':1}));
-      // vùng cách ly (khoảng cách tối thiểu 1 ô)
-      for(const b of S.blocks){ if(!(diff().haloAlways||S.drag===b.id)) continue; const bad=!!vio[b.id];
-        svg.append(sv('rect',{x:OX5+(b.x-1)*C5,y:OY5+(b.y-1)*C5,width:(b.w+2)*C5,height:(b.h+2)*C5,rx:8,fill:bad?'rgba(224,88,122,.10)':'rgba(143,127,209,.08)',stroke:bad?'#e0587a':'#8f7fd1','stroke-dasharray':'6 4','stroke-width':1.5})); }
-      // dây
-      for(const {w,path} of routes()){
-        const a=L5.point(S.blocks,w.from), b=L5.point(S.blocks,w.to);
-        if(!path){ svg.append(sv('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'#e0587a','stroke-width':3,'stroke-dasharray':'3 5'})); continue; }
-        const pts=[a,...path.map(c=>[OX5+c[0]*C5+C5/2,OY5+c[1]*C5+C5/2]),b].map(p=>p.join(',')).join(' ');
-        svg.append(sv('polyline',{points:pts,fill:'none',stroke:'#5aa9d6','stroke-width':4,'stroke-linejoin':'round','stroke-linecap':'round'}));
-        const hit=sv('polyline',{points:pts,fill:'none',stroke:'transparent','stroke-width':16,style:'cursor:pointer'});
-        hit.addEventListener('pointerdown',e=>{ e.stopPropagation(); S.wires=S.wires.filter(x=>x!==w); Sound.click(); host.fb('Đã xóa một dây.','info'); render(); });
-        svg.append(hit);
-      }
-      // khối
-      for(const b of S.blocks){
-        const bad=!!vio[b.id], g=sv('g',{style:'cursor:grab'});
-        g.append(sv('rect',{x:OX5+b.x*C5+2,y:OY5+b.y*C5+2,width:b.w*C5-4,height:b.h*C5-4,rx:8,fill:bad?'#ffc9d6':b.col,stroke:bad?'#e0587a':PAL.ink2,'stroke-width':bad?3.5:2.5}),
-          sv('text',{x:OX5+(b.x+b.w/2)*C5,y:OY5+(b.y+b.h/2)*C5+(b.sub?-2:5),'text-anchor':'middle','font-size':14,'font-weight':800,fill:PAL.ink},b.label));
-        if(b.sub) g.append(sv('text',{x:OX5+(b.x+b.w/2)*C5,y:OY5+(b.y+b.h/2)*C5+14,'text-anchor':'middle','font-size':10,fill:PAL.ink2},b.sub));
-        if(bad) g.append(sv('text',{x:OX5+b.x*C5+8,y:OY5+b.y*C5+16,'font-size':15,'font-weight':900,fill:'#e0587a'},'!'));
-        g.addEventListener('pointerdown',e=>startDrag(e,b));
-        svg.append(g);
-        for(const p of b.pins){ const [px,py]=L5.point(S.blocks,b.id+'.'+p.id), key=b.id+'.'+p.id;
-          const c=sv('circle',{cx:px,cy:py,r:7,fill:p.dir==='out'?'#ff9eb5':'#7ecbe8',stroke:S.sel===key?'#4a4458':'#fff','stroke-width':S.sel===key?4:2.5,style:'cursor:crosshair'});
-          c.addEventListener('pointerdown',e=>{ e.stopPropagation(); e.preventDefault(); pinClick(key); }); svg.append(c);
-          if(p.name) svg.append(sv('text',{x:px+(p.dir==='in'?12:-12),y:py+4,'text-anchor':p.dir==='in'?'start':'end','font-size':11,'font-weight':700,fill:PAL.ink,'pointer-events':'none'},p.name)); }
-      }
-      const nv=Object.keys(vio).length, nw=S.wires.filter(w=>S.wires.length&&L5.route(S.blocks,w.from,w.to)).length;
-      status.innerHTML=`Khối vi phạm: <b style="color:${nv?'#e0587a':'#2f9c74'}">${nv}</b> · Dây nối được: <b>${nw}/${W5_REQ.length}</b>`;
-    }
-    function startDrag(e,b){
-      e.preventDefault(); const p0=toSvg(e), gx=Math.floor((p0.x-OX5)/C5)-b.x, gy=Math.floor((p0.y-OY5)/C5)-b.y; S.drag=b.id;
-      const move=ev=>{ const p=toSvg(ev); const nx=clamp(Math.floor((p.x-OX5)/C5)-gx,0,COLS5-b.w), ny=clamp(Math.floor((p.y-OY5)/C5)-gy,0,ROWS5-b.h); if(nx!==b.x||ny!==b.y){ b.x=nx; b.y=ny; render(); } };
-      const up=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up); S.drag=null; Sound.click(); render(); };
-      window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); render();
-    }
-    function pinClick(key){
-      if(S.sel===key){ S.sel=null; render(); return; }
-      if(!S.sel){ S.sel=key; Sound.click(); host.fb('Đã chọn chân <b>'+key+'</b>. Bấm một chân khác để nối.','info'); render(); return; }
-      const a=L5.pin(S.blocks,S.sel), b=L5.pin(S.blocks,key);
-      if(a.p.dir===b.p.dir){ S.sel=key; Sound.bad(); host.fb('Hãy nối một <b>ngõ ra</b> (chấm hồng, bên phải khối) với một <b>ngõ vào</b> (chấm xanh, bên trái khối).','bad'); render(); return; }
-      const from=a.p.dir==='out'?S.sel:key, to=a.p.dir==='out'?key:S.sel; S.sel=null;
-      if(S.wires.some(w=>w.from===from&&w.to===to)){ host.fb('Dây này đã có rồi.','info'); render(); return; }
-      if(!W5_REQ.some(r=>r[0]===from&&r[1]===to)){ Sound.bad(); host.fb(`Mạch đếm không cần dây ${W5_NAME[from]} → ${W5_NAME[to]}. Gợi ý: bit 0 đảo mỗi nhịp (Q0 → NOT → D của bit 0); bit 1 = Q1 XOR Q0.`,'bad'); render(); return; }
-      S.wires.push({from,to}); Sound.click(); host.fb(`Đã nối ${W5_NAME[from]} → ${W5_NAME[to]}. Bấm vào dây để xóa.`,'info'); render();
-    }
-    function check(){
-      const msgs=[], vio=L5.violations(S.blocks);
-      for(const b of S.blocks) if(vio[b.id]) msgs.push(`Khối <b>${b.label}</b> ${[...new Set(vio[b.id])].join(', ')} → cần cách khối khác ít nhất 1 ô trống.`);
-      for(const r of W5_REQ){ const w=S.wires.find(x=>x.from===r[0]&&x.to===r[1]);
-        if(!w) msgs.push(`Chưa nối <b>${W5_NAME[r[0]]} → ${W5_NAME[r[1]]}</b>.`);
-        else if(!L5.route(S.blocks,w.from,w.to)) msgs.push(`Dây <b>${W5_NAME[r[0]]} → ${W5_NAME[r[1]]}</b> chưa đi được (bị khối chặn hoặc sát mép lưới); hãy dời khối ra.`); }
-      if(msgs.length){ host.wrong('Layout chưa đạt, chỉnh lại nhé (đã làm được gì vẫn giữ nguyên):<ul class="clean">'+msgs.map(m=>'<li>'+m+'</li>').join('')+'</ul>'); return; }
-      host.success('<ul class="clean"><li><b>Layout</b> là cách bố trí và kết nối các phần tử (ở đây: 2 flip-flop, 1 cổng NOT, 1 cổng XOR) trên chip.</li><li>Các khối phải cách nhau tối thiểu 1 ô trống, nên không có khối nào bị tô đỏ; mọi dây đều đi được.</li><li>Mạch: bit 0 đảo mỗi nhịp (D0 = NOT Q0), bit 1 đảo khi Q0 = 1 (D1 = Q1 XOR Q0) → đếm 00 → 01 → 10 → 11 → 00.</li></ul><span class="small">Đây chỉ là mô hình minh họa, <b>không phải layout đủ điều kiện chế tạo</b> và không dùng quy tắc công nghệ thực tế. Để đơn giản, đường clock và reset không được vẽ.</span>',TEXT.q5done);
-    }
-    body.append(
-      h('div',{class:'card',html:'<b>Layout</b> là cách bố trí và kết nối các phần tử trên chip. Hãy <b>kéo</b> các khối trên lưới sao cho khối nào cũng cách khối khác <b>ít nhất 1 ô trống</b> (vùng nét đứt quanh mỗi khối là vùng cách ly; khối vi phạm tô đỏ), rồi <b>nối 5 dây</b>: Q0→NOT, NOT→D bit 0, Q0→XOR.a, Q1→XOR.b, XOR→D bit 1. Bấm chân hồng rồi chân xanh để nối; bấm vào dây để xóa.'}),
-      h('div',{class:'note warn'},'Mô hình minh họa đơn giản trong game, không phải layout đủ điều kiện chế tạo và không dùng quy tắc công nghệ thực tế.'),
-      svg,status,
-      h('div',{class:'legend',html:'<span><i style="background:#c6e6fb"></i>khối hợp lệ</span><span><i style="background:#ffc9d6;border-color:#e0587a"></i>khối vi phạm</span><span><i style="background:rgba(143,127,209,.15);border-style:dashed"></i>vùng cách ly 1 ô</span><span><i style="background:#ff9eb5"></i>ngõ ra</span><span><i style="background:#7ecbe8"></i>ngõ vào</span>'}),
-      h('div',{class:'row c'},h('button',{class:'btn',onclick:check},'Kiểm tra layout'),
-        h('button',{class:'btn ghost',onclick:()=>{ S.wires=[]; S.sel=null; render(); host.fb('Đã xóa hết dây.','info'); }},'Xóa tất cả dây')));
-    render();
-  },
-  hint(){
-    const S=this._S, vio=L5.violations(S.blocks), ids=Object.keys(vio);
-    if(ids.length){ const b=S.blocks.find(x=>x.id===ids[0]); return `Khối ${b.label} ${vio[ids[0]][0]}. Kéo nó ra xa để chừa ít nhất 1 ô trống (cả theo đường chéo).`; }
-    for(const r of W5_REQ) if(!S.wires.some(w=>w.from===r[0]&&w.to===r[1])) return `Thử nối ${W5_NAME[r[0]]} → ${W5_NAME[r[1]]}.`;
-    return 'Mọi thứ có vẻ ổn, hãy bấm “Kiểm tra layout”!';
-  }
-};
-
-/* =====================================================================
-   12. GIAO DIỆN (HUD, màn hình, kết thúc)
-   ===================================================================== */
-const strip=s=>s.replace(/<[^>]+>/g,'');
-const overlayOpen=()=>['#scrHelp','#scrMenu','#scrEnd'].some(s=>!$(s).classList.contains('hidden'));
-const canMove=()=>G.screen==='play'&&!Dialogue.active&&!Host.active&&!overlayOpen();
-const UI = {
-  toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.add('hidden'),4000); },
-  updateHud(){
-    $('#objective').innerHTML='<b>Mục tiêu:</b> '+OBJECTIVES[G.stage]+(G.stage<6?` <span class="small">(Nhiệm vụ ${G.stage+1}/6: ${QUEST_TITLES[G.stage]})</span>`:'');
-    const p=$('#pips'); p.innerHTML=''; for(let i=0;i<6;i++) p.append(h('span',{class:'pip'+(i<G.stage?' done':(i===G.stage?' cur':'')),title:'Nhiệm vụ '+(i+1)+': '+QUEST_TITLES[i]}));
-    $('#score').textContent=totalScore(); $('#hints').textContent=totalHints();
-  },
-  screen(id){ for(const s of ['#scrTitle','#scrSelect','#scrHelp','#scrMenu','#scrEnd']) $(s).classList.add('hidden'); if(id) $(id).classList.remove('hidden'); },
-  buildSelect(){
-    const box=$('#looks'); box.innerHTML=''; this.previews=[];
-    CONFIG.looks.forEach((L,i)=>{ const cv=h('canvas',{width:100,height:120}); const card=h('div',{class:'look'+(i===G.look?' sel':''),tabindex:0,onclick:()=>{ G.look=i; Sound.click(); [...box.children].forEach((c,k)=>c.classList.toggle('sel',k===i)); }},cv,h('div',null,h('b',null,L.name)));
-      card.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); card.click(); } }); box.append(card); this.previews.push({cv,L}); });
-    const seg=$('#diffSeg'); seg.innerHTML='';
-    for(const k in CONFIG.difficulties) seg.append(h('button',{class:G.diff===k?'sel':'',onclick:()=>{ G.diff=k; Sound.click(); [...seg.children].forEach(b=>b.classList.remove('sel')); [...seg.children][Object.keys(CONFIG.difficulties).indexOf(k)].classList.add('sel'); $('#diffDesc').textContent=CONFIG.difficulties[k].desc; }},CONFIG.difficulties[k].label));
-    $('#diffDesc').textContent=diff().desc; $('#inName').value=G.name===CONFIG.defaultName?'':G.name;
-  },
-  showEnd(){
-    const tot=totalScore(), rank=tot>=450?'Xuất sắc':tot>=350?'Giỏi':'Khá';
-    const rows=[1,2,3,4,5].map(n=>{ const r=G.results[n]||{score:0,wrong:0,hints:0}; return `<tr><td>${n}. ${QUEST_TITLES[n-1]}</td><td><b>${r.score}</b>/${CONFIG.maxPoints}</td><td>${r.wrong}</td><td>${r.hints}</td></tr>`; }).join('');
-    const badge=`<svg viewBox="0 0 280 150" width="260" role="img" aria-label="Huy hiệu"><rect x="6" y="6" width="268" height="138" rx="26" fill="#fff0b8" stroke="#e8b93a" stroke-width="5"/><g transform="translate(46,48)"><rect x="8" y="8" width="44" height="44" rx="9" fill="#8fd3c1" stroke="#5fa896" stroke-width="3.5"/><g fill="#5fa896"><rect x="0" y="16" width="8" height="5"/><rect x="0" y="32" width="8" height="5"/><rect x="52" y="16" width="8" height="5"/><rect x="52" y="32" width="8" height="5"/><rect x="16" y="0" width="5" height="8"/><rect x="38" y="0" width="5" height="8"/><rect x="16" y="52" width="5" height="8"/><rect x="38" y="52" width="5" height="8"/></g><circle cx="22" cy="28" r="3.5" fill="#2f2a3d"/><circle cx="38" cy="28" r="3.5" fill="#2f2a3d"/><path d="M23 38 Q30 45 37 38" stroke="#2f2a3d" stroke-width="2.5" fill="none" stroke-linecap="round"/></g><text x="180" y="62" text-anchor="middle" font-size="17" font-weight="800" fill="#4a4458">Kỹ sư vi mạch</text><text x="180" y="86" text-anchor="middle" font-size="17" font-weight="800" fill="#4a4458">tập sự SGU</text><text x="180" y="112" text-anchor="middle" font-size="22" fill="#e8b93a">★ ★ ★</text></svg>`;
-    $('#endBox').innerHTML=`<div class="center"><h1>Hoàn thành! 🎉</h1><div>${badge}</div><p style="margin:4px 0"><b>${esc(G.name)}</b> nhận huy hiệu “<b>${CONFIG.badgeName}</b>”</p>
-      <div class="bigscore">${tot} / ${CONFIG.maxPoints*5}</div><div>Xếp loại: <b>${rank}</b> · Số lần dùng gợi ý: <b>${totalHints()}</b> · Độ khó: <b>${diff().label}</b></div></div>
-      <table class="result" style="margin:10px 0"><tr><th>Nhiệm vụ</th><th>Điểm</th><th>Lần sai</th><th>Gợi ý</th></tr>${rows}</table>
-      <h2 style="font-size:19px">Kiến thức đã học</h2><ul class="clean">
-      <li><b>Yêu cầu thiết kế:</b> xác định tín hiệu vào/ra: clk, rst, Q[1:0].</li>
-      <li><b>Sơ đồ khối:</b> clk, rst → bộ đếm 2 bit → Q → hiển thị.</li>
-      <li><b>RTL:</b> <code>rising_edge(clk)</code>, reset đồng bộ kiểm tra bên trong cạnh lên, <code>unsigned</code> với <code>ieee.numeric_std</code>.</li>
-      <li><b>Mô phỏng:</b> đọc waveform; Q chỉ đổi ở cạnh lên; reset đồng bộ cần cạnh lên với rst = 1; phát hiện lỗi cạnh xuống.</li>
-      <li><b>Layout:</b> bố trí và nối các phần tử trên chip; khoảng cách tối thiểu (mô hình minh họa).</li></ul>
-      <div class="row c"><button id="endReplay" class="btn" style="font-size:18px">Chơi lại</button><button id="endStay" class="btn ghost">Ở lại tham quan lab</button></div>`;
-    $('#endReplay').onclick=()=>Game.restart(); $('#endStay').onclick=()=>$('#scrEnd').classList.add('hidden');
-    $('#scrEnd').classList.remove('hidden'); Sound.ok();
-  }
-};
-
-/* =====================================================================
-   13. ĐIỀU PHỐI GAME
-   ===================================================================== */
-const stationInfo={whiteboard:[2,TEXT.q2intro],pcdesk:[3,TEXT.q3intro],bench:[4,TEXT.q4intro],layout:[5,TEXT.q5intro]};
-const Game = {
-  enterPlay(fresh){
-    G.screen='play'; UI.screen(null); Object.assign(G.player,{x:480,y:500,dir:'up',moving:false}); G.chip.x=450; G.chip.y=520; Input.keys={};
-    UI.updateHud(); if(fresh&&G.stage===0) Dialogue.open(TEXT.intro);
-  },
-  interact(){
-    const o=G.near; if(!canMove()||!o) return; Sound.click(); const [kind,arg]=o.act.split(':');
-    if(o.act==='npc:teacher') return this.teacherTalk();
-    if(o.act==='npc:khoa') return Dialogue.open([{who:'khoa',text:TEXT.khoaTips[G.stage]}]);
-    if(kind==='flavor') return Dialogue.open([{who:'chip',text:TEXT.flavor[arg]}]);
-    const [n,intro]=stationInfo[o.act];
-    if(G.stage<n-1) return Dialogue.open([{who:'chip',text:`Chưa tới lượt đâu! Hãy làm xong “Nhiệm vụ ${G.stage+1}: ${QUEST_TITLES[G.stage]}” trước nhé. ${strip(OBJECTIVES[G.stage])}`}]);
-    if(G.stage>=n) return Dialogue.open([{who:'chip',text:`Phần này bạn xong rồi! ${strip(OBJECTIVES[G.stage])}`}]);
-    if(G.seen[n]) Host.open(n); else { G.seen[n]=true; Dialogue.open(intro,()=>Host.open(n)); }
-  },
-  teacherTalk(){
-    if(G.stage===0){ const first=!G.seenAssign; G.seenAssign=true; Dialogue.open(first?TEXT.assign:TEXT.assignAgain,()=>Host.open(1)); }
-    else if(G.stage<5) Dialogue.open([{who:'teacher',text:`Em đang làm “Nhiệm vụ ${G.stage+1}: ${QUEST_TITLES[G.stage]}” đúng không? ${strip(OBJECTIVES[G.stage])}`}]);
-    else if(G.stage===5) Dialogue.open(TEXT.handover,()=>this.finish());
-    else Dialogue.open([{who:'teacher',text:'Em làm tốt lắm! Cô cho em xem lại kết quả nhé.'}],()=>UI.showEnd());
-  },
-  completeQuest(n,lines){
-    if(G.stage>=n) return;
-    const at=attempt(n), d=diff(); const sc=Math.max(CONFIG.minPoints,CONFIG.maxPoints-at.wrong*d.wrongPenalty-at.hints*d.hintPenalty);
-    G.results[n]={score:sc,wrong:at.wrong,hints:at.hints}; G.stage=n; save();
-    Host.close(); Fx.confetti(); Fx.banner(`✓ Hoàn thành nhiệm vụ ${n}!  +${sc} điểm`); Sound.ok(); UI.updateHud();
-    if(lines) setTimeout(()=>{ if(!Dialogue.active) Dialogue.open(lines); },900);
-  },
-  finish(){ G.stage=6; save(); Fx.confetti(); UI.updateHud(); UI.showEnd(); },
-  restart(){
-    Host.close(); Dialogue.active&&Dialogue.close(); Store.clear();
-    Object.assign(G,{stage:0,results:{},attempt:{},seenAssign:false,seen:{}}); UI.updateHud();
-    G.screen='select'; UI.buildSelect(); UI.screen('#scrSelect');
-  }
-};
-G.seen={};
-
-/* =====================================================================
-   14. KHỞI TẠO, SỰ KIỆN, VÒNG LẶP
-   ===================================================================== */
-const cv=$('#world'), ctx=cv.getContext('2d'), DPR=Math.min(2,window.devicePixelRatio||1);
-cv.width=W*DPR; cv.height=H*DPR;
-function fit(){ const wrap=$('#stageWrap'), s=Math.min(wrap.clientWidth/W,wrap.clientHeight/H); cv.style.width=Math.floor(W*s)+'px'; cv.style.height=Math.floor(H*s)+'px'; }
-window.addEventListener('resize',fit);
-
-function loadSaved(){
-  const d=Store.load(); if(!d) return false;
-  if(!Number.isInteger(d.look)||d.look<0||d.look>=CONFIG.looks.length) return false;
-  if(!CONFIG.difficulties[d.diff]) return false;
-  if(!Number.isInteger(d.stage)||d.stage<0||d.stage>6) return false;
-  G.name=String(d.name||CONFIG.defaultName).slice(0,14); G.look=d.look; G.diff=d.diff; G.stage=d.stage;
-  G.results=(d.results&&typeof d.results==='object')?d.results:{}; G.attempt=(d.attempt&&typeof d.attempt==='object')?d.attempt:{};
-  return true;
-}
-$('#btnStart').onclick=()=>{ Sound.unlock(); Sound.click(); G.screen='select'; UI.buildSelect(); UI.screen('#scrSelect'); };
-$('#btnContinue').onclick=()=>{ Sound.unlock(); Sound.click(); if(loadSaved()){ G.seen={}; Game.enterPlay(false); } };
-$('#btnBack').onclick=()=>{ Sound.click(); G.screen='title'; UI.screen('#scrTitle'); };
-$('#btnGo').onclick=()=>{
-  Sound.unlock(); Sound.click();
-  G.name=($('#inName').value.trim()||CONFIG.defaultName).slice(0,14);
-  Object.assign(G,{stage:0,results:{},attempt:{},seenAssign:false,seen:{}}); save(); Game.enterPlay(true);
-};
-const openHelp=()=>{ Input.keys={}; $('#scrHelp').classList.remove('hidden'); };
-$('#btnHelp').onclick=openHelp; $('#btnHelp2').onclick=openHelp; $('#btnHelpClose').onclick=()=>{ Sound.click(); $('#scrHelp').classList.add('hidden'); };
-$('#btnSound').onclick=()=>{
-  Sound.unlock(); Sound.set(!Sound.on); Sound.ok();
-  if(Sound.on) setTimeout(()=>{ if(!Sound.ctx||Sound.ctx.state!=='running') UI.toast('Trình duyệt đang chặn âm thanh. Hãy thử mở game trong Chrome/Edge/Safari, bật loa và (iPhone) tắt công tắc im lặng.'); },400);
-};
-$('#btnMenu').onclick=()=>{ if(G.screen!=='play') return; Input.keys={}; $('#saveNote').textContent=Store.ok?'Tiến độ được lưu tự động sau mỗi nhiệm vụ.':'Trình duyệt không cho lưu: tiến độ sẽ mất khi tải lại trang.'; $('#scrMenu').classList.remove('hidden'); };
-$('#mResume').onclick=()=>$('#scrMenu').classList.add('hidden');
-$('#mRestart').onclick=()=>{ if(confirm('Chơi lại từ đầu? Tiến độ hiện tại sẽ bị xóa.')){ $('#scrMenu').classList.add('hidden'); Game.restart(); } };
-$('#mHome').onclick=()=>{ Host.close(); $('#scrMenu').classList.add('hidden'); G.screen='title'; $('#btnContinue').classList.toggle('hidden',!Store.load()); UI.screen('#scrTitle'); };
-$('#dlgNext').onclick=()=>Dialogue.next();
-$('#qHint').onclick=()=>Host.hint();
-$('#qClose').onclick=()=>{ Sound.click(); Host.close(); };
-$('#btnAct').onclick=e=>{ e.currentTarget.blur(); Game.interact(); };
-document.querySelectorAll('#dpad button').forEach(b=>{ const k=b.dataset.k; const on=e=>{ e.preventDefault(); Input.virt[k]=true; }, off=()=>{ Input.virt[k]=false; };
-  b.addEventListener('pointerdown',on); b.addEventListener('pointerup',off); b.addEventListener('pointerleave',off); b.addEventListener('pointercancel',off); });
-['pointerdown','click','touchend'].forEach(ev=>document.addEventListener(ev,()=>Sound.unlock(),{passive:true}));
-window.addEventListener('blur',()=>{ Input.keys={}; });
-window.addEventListener('keyup',e=>{ const k=Input.map[e.code]; if(k) Input.keys[k]=false; });
-window.addEventListener('keydown',e=>{
-  Sound.unlock(); const tag=e.target.tagName; if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return;
-  if(Dialogue.active){ if(e.code==='KeyE'||e.code==='Space'||e.code==='Enter'){ e.preventDefault(); if(!e.repeat) Dialogue.next(); } return; }
-  if(Host.active){ if(e.code==='Escape') Host.close(); return; }
-  if(overlayOpen()){ if(e.code==='Escape'){ $('#scrHelp').classList.add('hidden'); $('#scrMenu').classList.add('hidden'); } return; }
-  if(G.screen!=='play') return;
-  const k=Input.map[e.code]; if(k){ Input.keys[k]=true; e.preventDefault(); return; }
-  if(e.code==='KeyE'&&!e.repeat) Game.interact();
-  else if(e.code==='Escape') $('#btnMenu').click();
-});
-
-let lastTs=0;
-function frame(ts){
-  const dt=Math.min(0.05,(ts-lastTs)/1000||0); lastTs=ts; G.t+=dt;
-  if(canMove()) movePlayer(dt); else G.player.moving=false;
-  const p=G.player, ch=G.chip, off={up:[0,28],down:[0,-26],left:[30,4],right:[-30,4]}[p.dir], k=Math.min(1,dt*4);
-  ch.x+=(p.x+off[0]-ch.x)*k; ch.y+=(p.y+off[1]+4-ch.y)*k;
-  G.near=canMove()?nearest():null;
-  const ab=$('#btnAct'); if(G.near){ const o=G.near; ab.textContent='E · '+(o.act.startsWith('npc:')?'Nói chuyện với ':(o.act.startsWith('flavor')?'Xem ':'Dùng '))+o.name; ab.classList.remove('hidden'); } else ab.classList.add('hidden');
-  Fx.update(dt); render(G.t);
-  if(G.screen==='title'){ const c=$('#titleChip').getContext('2d'); c.clearRect(0,0,150,120); drawChip(c,75,104,G.t,2.2); }
-  if(G.screen==='select'&&UI.previews) UI.previews.forEach(v=>{ const c=v.cv.getContext('2d'); c.clearRect(0,0,100,120); drawChibi(c,50,108,{look:v.L,dir:'down',moving:true,phase:G.t*8,t:G.t,scale:1.3}); });
-  requestAnimationFrame(frame);
-}
-fit(); UI.updateHud(); Sound.set(true);
-$('#btnContinue').classList.toggle('hidden',!Store.load());
-requestAnimationFrame(frame);
-window.SGU={G,Sim,Game,Host,Quests,L5,B5,Dialogue,UI,CONFIG,TEXT,Store,Input,OBJ,NPC,hitWorld};
-})();
-</script>
+<script src="js/content.js"></script>
+<script src="js/base.js"></script>
+<script src="js/host.js"></script>
+<script src="js/engines.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/game.js"></script>
 </body>
 </html>
