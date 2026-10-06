@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hành trình kỹ sư vi mạch SGU</title>
+<style>
+/* ===== MÀU SẮC & GIAO DIỆN: sửa các biến này để đổi màu toàn giao diện HTML (màu vẽ trên canvas nằm ở PAL trong js/base.js) ===== */
+:root{
+  --ink:#4a4458; --ink2:#7a7390; --bg:#fff7ef; --panel:#ffffff;
+  --pink:#ffd3df; --pink2:#ff9eb5; --mint:#bfe8d8; --mint2:#5fb89f;
+  --sky:#c6e6fb; --sky2:#5aa9d6; --lav:#dcd0f7; --lav2:#8f7fd1;
+  --butter:#fff0b8; --butter2:#e8b93a; --bad:#e0587a; --ok:#2f9c74;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Trebuchet MS",system-ui,sans-serif;font-size:16px}
+button{font-family:inherit;font-size:inherit;color:inherit}
+.hidden{display:none!important}
+#app{display:flex;flex-direction:column;height:100vh}
+/* HUD */
+#hud{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:6px 12px;background:linear-gradient(90deg,var(--pink),var(--lav),var(--sky));border-bottom:3px solid #fff}
+.brand{display:flex;align-items:baseline;gap:6px;font-size:15px}
+.brand small{background:var(--lav2);color:#fff;border-radius:8px;padding:1px 7px;font-weight:700}
+.hstats{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.hp{background:#ffffffd9;border-radius:12px;padding:3px 10px;font-size:14px;white-space:nowrap}
+.hp b{color:var(--lav2)}
+.xpwrap{display:flex;flex-direction:column;min-width:130px;background:#ffffffd9;border-radius:12px;padding:3px 10px}
+.xpwrap .t{font-size:12px;display:flex;justify-content:space-between;gap:8px}
+.xpbar{height:8px;border-radius:5px;background:#e9e4f2;overflow:hidden}
+.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint2),var(--sky2));width:0;transition:width .4s}
+.obj{flex:1 1 100%;order:5;background:#ffffffcc;border-radius:12px;padding:4px 12px;font-size:14.5px}
+.obj b{color:var(--lav2)}
+.hbtns{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.btn{border:0;border-radius:12px;padding:10px 18px;background:var(--lav2);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0002;transition:transform .08s}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.sm{padding:6px 12px;font-size:14px;background:#fff;color:var(--ink)}
+.btn.alt{background:var(--sky2)} .btn.ok{background:var(--mint2)} .btn.warn{background:var(--butter2);color:#4a3a00}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--lav)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.dim{opacity:.55}
+#stageWrap{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#efe6fa}
+#world{display:block;border-radius:10px;box-shadow:0 6px 24px #4a44582a}
+#btnAct{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font-size:17px;padding:12px 22px;z-index:5}
+#btnAct:hover{transform:translateX(-50%) translateY(-1px)}
+#dpad{position:absolute;left:12px;bottom:12px;display:none;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px;z-index:5}
+#dpad button{border:0;border-radius:14px;background:#ffffffcc;font-size:22px;touch-action:none}
+@media (pointer:coarse){#dpad{display:grid}}
+#banner{position:absolute;top:16%;left:50%;transform:translateX(-50%);background:var(--butter);border:4px solid var(--butter2);border-radius:20px;padding:12px 26px;font-size:24px;font-weight:800;z-index:60;animation:pop .5s ease-out;box-shadow:0 8px 24px #0003;text-align:center;pointer-events:none}
+@keyframes pop{0%{transform:translateX(-50%) scale(.3);opacity:0}70%{transform:translateX(-50%) scale(1.1)}100%{transform:translateX(-50%) scale(1);opacity:1}}
+#toast{position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#4a4458ee;color:#fff;border-radius:12px;padding:8px 16px;z-index:90;max-width:92%;text-align:center}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f4eafcf2;z-index:50;padding:12px;overflow:auto}
+.screen.clear{background:#4a445899}
+#scrPanel{z-index:55} #scrConfirm{z-index:70}
+.box{background:var(--panel);border-radius:24px;padding:24px 28px;max-width:860px;width:100%;box-shadow:0 10px 40px #4a44582e;border:4px solid var(--lav);max-height:96vh;overflow:auto}
+.box.wide{max-width:980px;padding:0;display:flex;flex-direction:column;overflow:hidden}
+.pnhead{display:flex;align-items:center;gap:10px;padding:10px 16px;background:linear-gradient(90deg,var(--lav),var(--sky))}
+.pnhead h2{flex:1;margin:0;font-size:20px;color:var(--ink)}
+#pnBody{padding:14px 18px;overflow:auto}
+.box h1{margin:0 0 4px;font-size:30px;color:var(--lav2);line-height:1.2}
+.box h2{margin:0 0 8px;color:var(--lav2)}
+.center{text-align:center}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.c{justify-content:center}
+.small{font-size:13.5px;color:var(--ink2)}
+.looks{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.look{border:4px solid var(--lav);border-radius:18px;padding:8px 10px;background:#fff;cursor:pointer;text-align:center;width:118px}
+.look.sel{border-color:var(--mint2);background:var(--mint)}
+.look canvas{display:block;margin:0 auto}
+input[type=text]{border:3px solid var(--lav);border-radius:12px;padding:8px 12px;font-size:16px;font-family:inherit;width:220px;color:var(--ink)}
+.seg{display:inline-flex;border-radius:12px;overflow:hidden;border:3px solid var(--lav)}
+.seg button{border:0;background:#fff;padding:8px 14px;cursor:pointer;font-weight:600}
+.seg button.sel{background:var(--lav2);color:#fff}
+kbd{background:#fff;border:2px solid var(--lav);border-bottom-width:4px;border-radius:7px;padding:1px 7px;font-weight:700;font-family:inherit}
+ul.clean{margin:6px 0;padding-left:20px} ul.clean li{margin:4px 0}
+code{background:#f1ecff;border-radius:5px;padding:0 4px;font-family:Consolas,monospace;font-size:.92em}
+/* hội thoại */
+#dialog{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,96vw);z-index:80;background:#fff;border:4px solid var(--lav2);border-radius:22px;padding:12px 16px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 30px #0003}
+#dlgPortrait{background:var(--lav);border-radius:16px;flex:none}
+#dlgName{font-weight:800;color:var(--lav2);margin-bottom:2px}
+#dlgText{font-size:18px;line-height:1.45;min-height:54px}
+#dlgBody{flex:1}
+#dlgNext{align-self:flex-end}
+/* khung nhiệm vụ */
+#quest{z-index:30;background:#4a445888}
+.qpanel{background:#fffdf9;border:4px solid var(--lav2);border-radius:22px;width:min(960px,98vw);max-height:96vh;display:flex;flex-direction:column;box-shadow:0 10px 40px #0004}
+.qhead{display:flex;gap:10px;align-items:center;padding:10px 16px;background:linear-gradient(90deg,var(--lav),var(--sky));border-radius:18px 18px 0 0}
+.qhead h2{flex:1;margin:0;font-size:19px;color:var(--ink)}
+.qbody{padding:14px 18px;overflow:auto;flex:1}
+.qfoot{padding:8px 18px 14px}
+#qFb{min-height:24px;border-radius:12px;padding:8px 12px;background:var(--butter);display:none;line-height:1.45}
+#qFb.show{display:block} #qFb.bad{background:#ffe0e8;border:2px solid var(--bad)} #qFb.ok{background:var(--mint);border:2px solid var(--ok)} #qFb.info{background:var(--sky)}
+.card{background:#fff;border:3px solid var(--lav);border-radius:16px;padding:10px 14px;margin-bottom:10px}
+.note{border-radius:12px;padding:8px 12px;background:var(--sky);font-size:14px;margin-bottom:10px}
+.note.warn{background:var(--butter)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.cols{grid-template-columns:1fr}}
+.sig{display:block;width:100%;text-align:left;border:3px solid var(--lav);background:#fff;border-radius:14px;padding:9px 12px;margin:6px 0;cursor:pointer}
+.sig b{font-family:Consolas,monospace;font-size:17px}
+.sig.sel{background:var(--sky);border-color:var(--sky2)}
+.sig.bad{background:#ffe0e8;border-color:var(--bad)} .sig.good{background:var(--mint);border-color:var(--mint2)}
+svg.diagram{width:100%;height:auto;background:#fff;border:3px solid var(--lav);border-radius:14px;touch-action:none;user-select:none}
+pre.code{background:#2f2a3d;color:#f1ecff;border-radius:14px;padding:12px 14px;font-family:Consolas,"Courier New",monospace;font-size:14.5px;line-height:1.6;overflow:auto;margin:0 0 10px}
+pre.code .cm{color:#9d93c0}
+.blank{border:2px dashed #ffd36e;background:#4a4166;color:#ffe9a8;border-radius:7px;padding:0 8px;font-family:inherit;font-size:inherit;cursor:pointer;min-width:60px}
+.blank.cur{outline:3px solid var(--pink2)} .blank.filled{border-style:solid;color:#fff} .blank.good{background:#2f7f62;border-color:#8be3bf} .blank.bad{background:#a3365a;border-color:#ff9eb5}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.opt{border:3px solid var(--lav);background:#fff;border-radius:12px;padding:6px 12px;font-family:Consolas,monospace;font-size:15px;cursor:pointer}
+.opt:hover{background:var(--lav)} .opt.sel{background:var(--sky);border-color:var(--sky2)}
+canvas.wave{width:100%;height:auto;background:#fff;border:3px solid var(--lav);border-radius:14px;display:block}
+.chk{list-style:none;padding:0;margin:6px 0}
+.chk li{padding:3px 0}
+.chk li::before{content:"○ ";color:var(--ink2)} .chk li.done::before{content:"✓ ";color:var(--ok);font-weight:800}
+.radio{display:block;border:3px solid var(--lav);border-radius:12px;padding:8px 12px;margin:6px 0;cursor:pointer;background:#fff}
+.radio input{margin-right:8px} .radio.mono{font-family:Consolas,monospace}
+.readout{font-family:Consolas,monospace;background:#f4f0fb;border-radius:10px;padding:6px 10px;margin:8px 0;font-size:14.5px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px;margin:6px 0}
+.legend i{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:4px;border:2px solid var(--ink2)}
+.result td,.result th{padding:4px 10px;text-align:left}
+.result{border-collapse:collapse;width:100%}
+.result tr:nth-child(even){background:#f8f3ff}
+/* bảng dữ liệu của các nhiệm vụ */
+.scrollx{overflow-x:auto}
+.tbl{border-collapse:collapse;margin:6px 0}
+.tbl th,.tbl td{border:2px solid var(--lav);padding:5px 9px;text-align:center;font-family:Consolas,monospace;white-space:nowrap}
+.tbl th{background:#f4f0fb} .tbl th.out{background:var(--butter)}
+.tbl select{font-family:Consolas,monospace;font-size:14px;border:2px solid var(--lav);border-radius:8px;padding:2px 4px;background:#fff;color:var(--ink)}
+.tbl select.bad,.cellbtn.bad{background:#ffe0e8;border-color:var(--bad)} .tbl select.good,.cellbtn.good{background:var(--mint);border-color:var(--mint2)}
+.cellbtn{min-width:44px;border:2px solid var(--lav);border-radius:8px;background:#fff;font-family:Consolas,monospace;font-size:16px;cursor:pointer;padding:2px 8px}
+.dbg{background:#2f2a3d;border-radius:14px;padding:8px;margin-bottom:8px;overflow:auto}
+.cl{display:flex;gap:10px;width:100%;text-align:left;background:transparent;border:0;border-radius:6px;color:#f1ecff;font-family:Consolas,monospace;font-size:14px;line-height:1.55;padding:0 6px;cursor:pointer;white-space:pre}
+.cl:hover:not(:disabled){background:#4a4166} .cl:disabled{cursor:default}
+.cl .ln{color:#8e84b3;min-width:22px;text-align:right} .cl.sus{background:#a3365a} .cl.fixed{background:#2f7f62}
+/* panel: nhiệm vụ, hồ sơ, cửa hàng */
+.pill{display:inline-block;background:var(--lav);border-radius:12px;padding:3px 10px;font-size:14px;font-weight:700} .pill.ok{background:var(--mint)}
+.tabs{display:flex;gap:6px;margin:6px 0 10px;flex-wrap:wrap}
+.tab{border:3px solid var(--lav);background:#fff;border-radius:12px;padding:6px 14px;cursor:pointer;font-weight:700}
+.tab.sel{background:var(--lav2);border-color:var(--lav2);color:#fff}
+.tcard{background:#fff;border:3px solid var(--lav);border-radius:16px;padding:10px 14px;margin-bottom:10px}
+.tcard h3{margin:0 0 4px;font-size:17px} .tcard.done{background:#f1fbf6;border-color:var(--mint2)} .tcard.locked{opacity:.75;background:#faf7ff}
+.tag{background:var(--sky);border-radius:10px;padding:2px 8px;font-size:12.5px;font-weight:700}
+.bar{height:10px;border-radius:6px;background:#e9e4f2;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint2),var(--sky2))}
+.steps{margin:6px 0;padding-left:22px} .steps li{margin:2px 0} .steps li.done{color:var(--ok);text-decoration:line-through;text-decoration-color:#2f9c7455} .steps li.cur{font-weight:700;color:var(--lav2)}
+.lk{font-size:13.5px} .lk.ok{color:var(--ok)} .lk.no{color:var(--bad)}
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.icard{background:#fff;border:3px solid var(--lav);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center}
+.icard.own{border-color:var(--mint2);background:#f6fffb} .icard .in{font-weight:700} .icard .locks{text-align:left;width:100%}
+.prev{background:#f4f0fb;border-radius:12px} .avatar{background:#f4f0fb;border-radius:16px}
+.big{font-size:20px;font-weight:800;color:var(--lav2)}
+.skill{display:grid;grid-template-columns:1fr auto;gap:0 10px;margin:6px 0} .skill .bar{grid-column:1/3}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.badge{border:2px dashed var(--lav);border-radius:12px;padding:6px;text-align:center;opacity:.6} .badge.got{opacity:1;border:2px solid var(--butter2);background:var(--butter)}
+.badge .bi{font-size:24px} .badge .bn{font-weight:700;font-size:14px}
+.savebox{width:100%;font-family:Consolas,monospace;font-size:12.5px;border:3px solid var(--lav);border-radius:12px;padding:8px;color:var(--ink);margin:6px 0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="brand"><b>Hành trình kỹ sư vi mạch</b><small>SGU</small></div>
+    <div class="hstats">
+      <span class="hp"><b id="hDay">Ngày 1</b></span>
+      <span class="hp" id="hCareer">Sinh viên SGU</span>
+      <div class="xpwrap" title="Kinh nghiệm để lên cấp"><div class="t"><span>XP</span><span id="hXpText">0</span></div><div class="xpbar"><i id="hXpBar"></i></div></div>
+      <span class="hp" title="Xu trong game">🪙 <b id="hMoney">0</b></span>
+      <span class="hp" title="Năng lượng còn lại hôm nay">⚡ <b id="hEnergy">3/3</b></span>
+    </div>
+    <div class="hbtns">
+      <button id="btnQuests" class="btn sm" title="Phím tắt: Q">Nhiệm vụ</button>
+      <button id="btnProfile" class="btn sm" title="Phím tắt: P">Hồ sơ</button>
+      <button id="btnShop" class="btn sm">Cửa hàng</button>
+      <button id="btnNextDay" class="btn sm">🌅 Sang ngày mới</button>
+      <button id="btnMenu" class="btn sm">Menu</button>
+    </div>
+    <div id="objective" class="obj"></div>
+  </header>
+  <main id="stageWrap">
+    <canvas id="world"></canvas>
+    <button id="btnAct" class="btn hidden"></button>
+    <div id="dpad">
+      <span></span><button data-k="up">▲</button><span></span>
+      <button data-k="left">◀</button><span></span><button data-k="right">▶</button>
+      <span></span><button data-k="down">▼</button><span></span>
+    </div>
+    <div id="banner" class="hidden"></div>
+  </main>
+</div>
+<div id="toast" class="hidden"></div>
+
+<!-- Màn hình bắt đầu -->
+<div id="scrTitle" class="screen">
+  <div class="box center">
+    <h1>Hành trình kỹ sư vi mạch SGU</h1>
+    <p style="font-size:18px;margin:6px 0 10px">Trò chơi nhập vai 2D về sự nghiệp thiết kế vi mạch: từ sinh viên đến kỹ sư có kinh nghiệm, qua nhiều ngày làm việc.</p>
+    <canvas id="titleChip" width="150" height="120" style="margin:0 auto 8px"></canvas>
+    <div class="row c">
+      <button id="btnStart" class="btn" style="font-size:20px;padding:14px 30px">Chơi mới</button>
+      <button id="btnContinue" class="btn ok hidden" style="font-size:20px;padding:14px 30px">Tiếp tục</button>
+    </div>
+    <div class="row c" style="margin-top:10px">
+      <button id="btnImportTitle" class="btn ghost">Nhập bản lưu</button>
+      <button id="btnHelp2" class="btn ghost">Hướng dẫn</button>
+    </div>
+    <p id="oldNote" class="small hidden" style="margin-top:10px">Tìm thấy tiến độ của game cũ (“Một ngày làm kỹ sư thiết kế vi mạch – SGU”). Bấm “Tiếp tục” để chuyển đổi sang phiên bản mới.</p>
+    <p class="small" style="margin-top:12px">Phòng lab trong game là bối cảnh hư cấu, không dùng logo chính thức. Tiến độ tự lưu trên trình duyệt; ngày chỉ trôi khi bạn bấm “Sang ngày mới”.</p>
+  </div>
+</div>
+
+<!-- Chọn nhân vật -->
+<div id="scrSelect" class="screen hidden">
+  <div class="box center">
+    <h2 style="font-size:26px">Chọn nhân vật của bạn</h2>
+    <div class="row c"><label for="inName">Tên:</label><input id="inName" type="text" maxlength="14" autocomplete="off"></div>
+    <div id="looks" class="looks"></div>
+    <div class="row c" style="margin-bottom:6px"><span>Độ khó:</span><span class="seg" id="diffSeg"></span></div>
+    <p id="diffDesc" class="small"></p>
+    <div class="row c" style="margin-top:12px">
+      <button id="btnBack" class="btn ghost">Quay lại</button>
+      <button id="btnGo" class="btn" style="font-size:19px">Bắt đầu hành trình ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hướng dẫn -->
+<div id="scrHelp" class="screen clear hidden">
+  <div class="box">
+    <h2>Hướng dẫn chơi</h2>
+    <ul class="clean">
+      <li>Di chuyển: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> hoặc phím mũi tên. Tương tác: <kbd>E</kbd> hoặc nút “Dùng…” ở dưới màn hình. Phím tắt: <kbd>Q</kbd> nhiệm vụ, <kbd>P</kbd> hồ sơ.</li>
+      <li><b>Chương 1 (hướng dẫn):</b> 6 nhiệm vụ đầu tiên, đi theo mũi tên nhảy nhảy trên bản đồ.</li>
+      <li><b>Sau đó:</b> mỗi ngày có <b>năng lượng</b> (⚡). Mở “Nhiệm vụ” → chọn nhiệm vụ hằng ngày hoặc bước của một dự án → “Nhận việc” → đi tới đúng khu trong lab và nhấn E. Mỗi nhiệm vụ tốn 1 năng lượng.</li>
+      <li>Hoàn thành nhiệm vụ nhận <b>XP</b>, <b>xu</b> 🪙 và <b>điểm kỹ năng</b>. Đủ XP và xong các dự án yêu cầu thì lên cấp: Sinh viên → Thực tập sinh → Kỹ sư mới → Kỹ sư có kinh nghiệm.</li>
+      <li>Khi sẵn sàng, bấm <b>🌅 Sang ngày mới</b>: nhận trợ cấp, hồi năng lượng, đổi bảng nhiệm vụ. Ngày <b>không</b> tự trôi khi bạn tắt game.</li>
+      <li>Dùng xu ở “Cửa hàng” để mua trang phục, phụ kiện, đồ cho Chip Chip và trang trí phòng lab. Mỗi món ghi rõ điều kiện mở khóa.</li>
+      <li>Sai thì được thử lại. Nút <b>Gợi ý</b> giúp bạn nhưng giảm một phần thưởng (tuỳ độ khó).</li>
+      <li>Tiến độ tự lưu. Dùng Menu → “Lưu trữ” để xuất/nhập bản lưu khi chuyển máy.</li>
+    </ul>
+    <p class="small">Phần mô phỏng và layout là mô hình giáo dục trong game, không phải công cụ HDL hay layout thực tế.</p>
+    <div class="row c"><button id="btnHelpClose" class="btn">Đã hiểu</button></div>
+  </div>
+</div>
+
+<!-- Menu -->
+<div id="scrMenu" class="screen clear hidden">
+  <div class="box center" style="max-width:420px">
+    <h2>Menu</h2>
+    <div class="row c" style="flex-direction:column;align-items:stretch">
+      <button id="mResume" class="btn">Tiếp tục chơi</button>
+      <button id="mHelp" class="btn alt">Hướng dẫn</button>
+      <button id="btnMusic" class="btn alt">Nhạc nền: Bật</button>
+      <button id="btnSound" class="btn alt">Hiệu ứng âm thanh: Bật</button>
+      <button id="mSave" class="btn ok">Lưu trữ: xuất / nhập bản lưu</button>
+      <button id="mHome" class="btn ghost">Về màn hình chính</button>
+      <button id="mRestart" class="btn warn">Chơi lại từ đầu</button>
+    </div>
+    <p id="saveNote" class="small"></p>
+  </div>
+</div>
+
+<!-- Kết thúc chương 1 -->
+<div id="scrEnd" class="screen hidden"><div class="box" id="endBox"></div></div>
+
+<!-- Panel dùng chung -->
+<div id="scrPanel" class="screen clear hidden">
+  <div class="box wide">
+    <div class="pnhead"><h2 id="pnTitle"></h2><button id="pnClose" class="btn ghost sm">Đóng ✕</button></div>
+    <div id="pnBody"></div>
+  </div>
+</div>
+
+<!-- Hộp xác nhận -->
+<div id="scrConfirm" class="screen clear hidden">
+  <div class="box center" style="max-width:460px">
+    <h2 id="cfTitle"></h2><div id="cfBody" style="margin-bottom:12px"></div>
+    <div class="row c"><button id="cfNo" class="btn ghost">Hủy</button><button id="cfYes" class="btn">Đồng ý</button></div>
+  </div>
+</div>
+
+<!-- Hội thoại -->
+<div id="dialog" class="hidden">
+  <canvas id="dlgPortrait" width="84" height="100"></canvas>
+  <div id="dlgBody"><div id="dlgName"></div><div id="dlgText"></div></div>
+  <button id="dlgNext" class="btn">Tiếp ▶</button>
+</div>
+
+<!-- Khung nhiệm vụ -->
+<div id="quest" class="screen hidden">
+  <div class="qpanel">
+    <div class="qhead">
+      <h2 id="qTitle"></h2>
+      <button id="qHint" class="btn warn sm">Gợi ý</button>
+      <button id="qClose" class="btn ghost sm">Tạm thoát (giữ tiến độ)</button>
+    </div>
+    <div class="qbody" id="qBody"></div>
+    <div class="qfoot"><div id="qFb"></div><div id="qResult"></div></div>
+  </div>
+</div>
+
+<script src="js/content.js"></script>
+<script src="js/base.js"></script>
+<script src="js/host.js"></script>
+<script src="js/engines.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
